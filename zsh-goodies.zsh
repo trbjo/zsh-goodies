@@ -6,6 +6,21 @@ ex() {
     fi
 }
 
+
+cdParentKey() {
+    cd ..
+    # print
+    clear
+    # zle      reset-prompt
+    exa --group-directories-first
+    vcs_info
+    zle       reset-prompt
+}
+
+zle -N                 cdParentKey
+bindkey '^[[1;3A'      cdParentKey
+
+
 fancy-ctrl-z () {
     if [[ $#BUFFER -eq 0 ]]
     then
