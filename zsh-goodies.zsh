@@ -43,7 +43,16 @@ bindkey '^Z' fancy-ctrl-z
 
 
 go_home() {
-    [ ! $BUFFER ] && cd && xterm_title_precmd && zle reset-prompt || zle accept-line
+    if [ ! $BUFFER ] ; then
+        cd
+        if [[ $PWD != $OLDPWD ]]; then
+            gitstatus_prompt_update
+            printf "\n"
+            zle reset-prompt
+        fi
+    else
+        zle accept-line
+    fi
 }
 zle -N go_home
 bindkey -e "^M" go_home
