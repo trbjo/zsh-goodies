@@ -42,20 +42,22 @@ zle -N fancy-ctrl-z
 bindkey '^Z' fancy-ctrl-z
 
 
-go_home() {
+go_to_old_pwd() {
+    if [[ "${LASTWIDGET}" == "autosuggest-execute" ]] && [ ${MYVAR} ]; then
+            printf "\n"
+    fi
     if [ ! $BUFFER ] ; then
-        cd
+        cd ${OLDPWD}
         if [[ $PWD != $OLDPWD ]]; then
             gitstatus_prompt_update
-            printf "\n"
             zle reset-prompt
         fi
     else
         zle accept-line
     fi
 }
-zle -N go_home
-bindkey -e "^M" go_home
+zle -N go_to_old_pwd
+bindkey -e "^M" go_to_old_pwd
 
 
 insert_sudo() {
