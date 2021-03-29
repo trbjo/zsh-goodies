@@ -43,7 +43,7 @@ bindkey '^Z' fancy-ctrl-z
 
 
 go_to_old_pwd() {
-    if [[ "${LASTWIDGET}" == "autosuggest-execute" ]] && [ ${MYVAR} ]; then
+    if [[ "${LASTWIDGET}" == "autosuggest-execute" ]] && [[ $PWD != $OLDPWD ]] && [ ${MYVAR} ]; then
             printf "\n"
     fi
     if [ ! $BUFFER ] ; then
