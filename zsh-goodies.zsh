@@ -43,15 +43,10 @@ bindkey '^Z' fancy-ctrl-z
 
 
 go_to_old_pwd() {
-    if [[ "${LASTWIDGET}" == "autosuggest-execute" ]] && [[ $PWD != $OLDPWD ]] && [ ${Addnewline} ]; then
-            printf "\n"
-            unset Addnewline
-    fi
     if [ ! $BUFFER ] ; then
-        cd ${OLDPWD}
         if [[ $PWD != $OLDPWD ]]; then
-            gitstatus_prompt_update
-            zle reset-prompt
+            cd ${OLDPWD}
+            zle redraw-prompt
         fi
     else
         zle accept-line
