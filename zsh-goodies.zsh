@@ -42,18 +42,18 @@ zle -N fancy-ctrl-z
 bindkey '^Z' fancy-ctrl-z
 
 
-go_to_old_pwd() {
+go_home() {
     if [ ! $BUFFER ] ; then
-        if [[ $PWD != $OLDPWD ]]; then
-            cd ${OLDPWD}
+        if [[ $PWD != $HOME ]]; then
+            cd
             zle redraw-prompt
         fi
     else
         zle accept-line
     fi
 }
-zle -N go_to_old_pwd
-bindkey -e "^M" go_to_old_pwd
+zle -N go_home
+bindkey -e "^M" go_home
 
 
 insert_sudo() {
