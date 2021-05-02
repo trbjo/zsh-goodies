@@ -46,6 +46,7 @@ go_home() {
     if [ ! $BUFFER ] ; then
         if [[ $PWD != $HOME ]]; then
             cd
+            xterm_title_preexec
             zle redraw-prompt
         fi
     else
