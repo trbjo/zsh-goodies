@@ -50,6 +50,8 @@ go_home() {
             zle redraw-prompt
         fi
     else
+        #trim trailing spaces
+        BUFFER="${BUFFER% }"
         zle accept-line
     fi
 }
