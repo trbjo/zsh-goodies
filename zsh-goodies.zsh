@@ -251,7 +251,13 @@ bindkey '^Q' remember
 # Makes tab repeat the last command if the buffer is empty.
 # Otherwise workes as normal
 repeat-last-command-or-complete-entry() {
-    [ -z "$BUFFER" ] && zle up-history && zle accept-line || zle expand-or-complete
+    if [ -z "$BUFFER" ]; then
+        zle up-history
+        zle accept-line
+    else
+        [[ ! -z $pending_git_status_pid ]] && kill $pending_git_status_pid > /dev/null 2>&1 && unset pending_git_status_pid
+        zle expand-or-complete
+    fi
 }
 zle -N repeat-last-command-or-complete-entry
 bindkey '\t' repeat-last-command-or-complete-entry
