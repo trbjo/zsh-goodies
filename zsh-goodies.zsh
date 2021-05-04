@@ -51,7 +51,7 @@ go_home() {
         fi
     else
         #trim trailing spaces
-        BUFFER="${BUFFER% }"
+        BUFFER="${BUFFER%%[[:blank:]]#}"
         zle accept-line
     fi
 }
