@@ -235,8 +235,9 @@ umount() {
 remember() {
     # Nothing in buffer: get previous command.
     if [[ $#BUFFER -eq 0 ]]; then
-        LBUFFER="${stored}"
+        BUFFER="${stored}"
         CURSOR=$mycursor
+        typeset -f _zsh_highlight > /dev/null && _zsh_highlight
     # Store current input.
     else
         mycursor=$CURSOR
