@@ -45,9 +45,14 @@ bindkey '^Z' fancy-ctrl-z
 go_home() {
     if [ ! $BUFFER ] ; then
         if [[ $PWD != $HOME ]]; then
-            cd
             xterm_title_preexec
-            zle redraw-prompt
+            cd
+            local precmd
+                for precmd in $precmd_functions
+                do
+                    $precmd
+                done
+            zle reset-prompt
         fi
     else
         #trim trailing spaces
