@@ -45,18 +45,17 @@ bindkey '^Z' fancy-ctrl-z
 go_home() {
     if [ ! $BUFFER ] ; then
         if [[ $PWD != $HOME ]]; then
-            local preexec
+            local preexec precmd
             for preexec in $preexec_functions
             do
                 $preexec
             done
             cd
             print
-            local precmd
-                for precmd in $precmd_functions
-                do
-                    $precmd
-                done
+            for precmd in $precmd_functions
+            do
+                $precmd
+            done
             zle reset-prompt
         fi
     else
