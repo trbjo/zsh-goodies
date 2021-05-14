@@ -45,7 +45,11 @@ bindkey '^Z' fancy-ctrl-z
 go_home() {
     if [ ! $BUFFER ] ; then
         if [[ $PWD != $HOME ]]; then
-            local precmd
+            local precmd preexec
+            for preexec in $preexec_functions
+            do
+                $preexec
+            done
             cd
             print
             for precmd in $precmd_functions
