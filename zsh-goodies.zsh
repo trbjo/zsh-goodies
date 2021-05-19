@@ -267,7 +267,7 @@ bindkey '^Q' remember
 repeat-last-command-or-complete-entry() {
     if [ -z "$BUFFER" ]; then
         zle up-history
-        zle accept-line
+        [[ "${BUFFER:0:2}" != "u " ]] && zle accept-line
     else
         [[ ! -z $pending_git_status_pid ]] && kill $pending_git_status_pid > /dev/null 2>&1 && unset pending_git_status_pid
         zle expand-or-complete
