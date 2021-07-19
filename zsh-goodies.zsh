@@ -205,7 +205,7 @@ length() {
 
 function __calc_plugin {
     myargs="$@"
-    python3 -c "from math import *; print($myargs)" | tee >(wl-copy -- 2> /dev/null)
+    python3 -c "from math import *; print($myargs)" | tee >(wl-copy -n -- 2> /dev/null)
     return 0
 }
 aliases[calc]='noglob __calc_plugin'
