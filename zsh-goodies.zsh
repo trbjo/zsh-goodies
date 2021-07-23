@@ -217,9 +217,9 @@ mount() {
     mountpoint="/mnt"
     if [ $# -eq 0 ]; then
         newest_disk=$(ls /dev/sd* | sort --ignore-case --sort=version | tail -1)
-        sudo mount $newest_disk -o uid=tb $mountpoint || return 1
+        doas mount $newest_disk -o uid=tb $mountpoint || return 1
     else
-        sudo mount /dev/"$1" -o uid=tb $mountpoint || return 1
+        doas mount /dev/"$1" -o uid=tb $mountpoint || return 1
 
     fi
     cd $mountpoint
@@ -235,9 +235,9 @@ umount() {
     fi
 
     if [ $# -eq 0 ]; then
-        sudo umount /mnt
+        doas umount /mnt
     else
-        sudo umount "$@"
+        doas umount "$@"
     fi
 }
 
