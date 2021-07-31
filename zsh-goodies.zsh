@@ -48,13 +48,13 @@ bindkey '^Z' fancy-ctrl-z
 
 go_to_old_pwd() {
     if [ ! $BUFFER ] ; then
-        if [[ $PWD != $HOME ]]; then
+        if [[ $PWD != $OLDPWD ]]; then
             local precmd preexec
             for preexec in $preexec_functions
             do
                 $preexec
             done
-            cd -
+            cd - > /dev/null 2>&1
             print
             for precmd in $precmd_functions
             do
