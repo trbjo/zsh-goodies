@@ -46,7 +46,7 @@ zle -N fancy-ctrl-z
 bindkey '^Z' fancy-ctrl-z
 
 
-go_home() {
+go_to_old_pwd() {
     if [ ! $BUFFER ] ; then
         if [[ $PWD != $HOME ]]; then
             local precmd preexec
@@ -54,7 +54,7 @@ go_home() {
             do
                 $preexec
             done
-            cd
+            cd -
             print
             for precmd in $precmd_functions
             do
@@ -68,8 +68,8 @@ go_home() {
         zle accept-line
     fi
 }
-zle -N go_home
-bindkey -e "^M" go_home
+zle -N go_to_old_pwd
+bindkey -e "^M" go_to_old_pwd
 
 
 insert_sudo() {
