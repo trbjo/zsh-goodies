@@ -293,7 +293,6 @@ remember() {
 zle -N remember
 bindkey '^Q' remember
 
-
 # Makes tab repeat the last command if the buffer is empty.
 # Otherwise workes as normal
 repeat-last-command-or-complete-entry() {
