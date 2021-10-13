@@ -11,6 +11,22 @@ mkcd() {
   cd "$1"
 }
 
+backward-delete-char() {
+    if ((REGION_ACTIVE)) then
+        if [[ $CURSOR -gt $MARK ]]; then
+            BUFFER=$BUFFER[0,MARK]$BUFFER[CURSOR+1,-1]
+            CURSOR=$MARK
+        else
+            BUFFER=$BUFFER[1,CURSOR]$BUFFER[MARK+1,-1]
+        fi
+        zle set-mark-command -n -1
+    else
+        zle .backward-delete-char
+    fi
+}
+zle -N backward-delete-char
+bindkey "^?" backward-delete-char
+
 # this is meant to be bound to the same key as the terminal paste key
 delete_active_selection() {
     if ((REGION_ACTIVE)) then
