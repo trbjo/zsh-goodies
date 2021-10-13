@@ -273,8 +273,6 @@ umount() {
     fi
 }
 
-
-
 # Store the current input, and restore it with a second ^q
 # also store the cursor pos
 remember() {
