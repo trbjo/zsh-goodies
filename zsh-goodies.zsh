@@ -244,7 +244,6 @@ aliases[calc]='noglob __calc_plugin'
 aliases[c]='noglob __calc_plugin'
 
 
-
 mount() {
     mountpoint="/mnt"
     if [ $# -eq 0 ]; then
