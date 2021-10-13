@@ -308,7 +308,6 @@ repeat-last-command-or-complete-entry() {
 zle -N repeat-last-command-or-complete-entry
 bindkey '\t' repeat-last-command-or-complete-entry
 
-
 groot() {
     gittest=$(git rev-parse --show-toplevel) > /dev/null 2>&1 && cd $gittest || print "Not in a git dir"
 }
