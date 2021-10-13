@@ -11,6 +11,7 @@ mkcd() {
   cd "$1"
 }
 
+# Makes backspace delete the active selection if it has one
 backward-delete-char() {
     if ((REGION_ACTIVE)) then
         if [[ $CURSOR -gt $MARK ]]; then
