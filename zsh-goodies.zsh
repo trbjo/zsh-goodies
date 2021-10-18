@@ -104,15 +104,15 @@ zle -N go_to_old_pwd
 bindkey -e "^M" go_to_old_pwd
 
 
-insert_sudo() {
+insert_doas() {
     [ $BUFFER ] && LBUFFER+="!" && return 0
     zle up-history
-    BUFFER="sudo $BUFFER"
+    BUFFER="doas $BUFFER"
     zle end-of-line
     # zle accept-line
     }
-zle -N insert_sudo
-bindkey -e "!" insert_sudo
+zle -N insert_doas
+bindkey -e "!" insert_doas
 
 
 wrapper() {
