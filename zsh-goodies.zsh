@@ -11,6 +11,71 @@ mkcd() {
   cd "$1"
 }
 
+# nvm takes too long to source, we only source it if we need to
+nvm() {
+    if [[ ! -d /usr/share/nvm ]]; then
+        print "Please install nvm first"
+        return 1
+    fi
+
+    [ -z "$NVM_DIR" ] && export NVM_DIR="$HOME/.nvm"
+    source /usr/share/nvm/nvm.sh
+    source /usr/share/nvm/bash_completion
+    source /usr/share/nvm/install-nvm-exec
+    if [ $# -ne 0 ]; then
+        nvm $@
+    fi
+}
+
+if command -v curlie > /dev/null 2>&1; then
+    curlie() {
+         local -a myargs
+         for string in $@; do
+              if [[ $string == http* ]]; then
+                   string=${string:gs/ /\%20}
+              fi
+              myargs+=$string
+         done
+         /usr/bin/curlie $myargs
+    }
+fi
+
+
+gch() {
+    [ ! -d "${HOME}/gi" ] && mkdir -p "${HOME}/gi"
+    if [[ "$PWD" == "$HOME" ]]; then
+        cd "${HOME}/gi"
+    fi
+
+    if [[ "${#@}" -lt 1 ]]; then
+        repo="$(wl-paste -n)"
+    else
+        repo="$1"
+    fi
+
+    if [[ "$repo" == *github.com* ]] && [[ ${repo:0:3} != "git" ]]; then
+        # we are cloning from github, therefore automatically use ssh.
+        repo="git@github.com:${${repo##*github.com/}%*/}.git"
+    fi
+
+    git clone "${repo}" &&\
+    cd "${${${repo/%\//}##*/}//.git/}"
+    # the expr is read inside out. First, if the last char is '/' ('%' means last) we replace it with ''.
+    # then we remove everything before the last '/' (string has now mutated), and finally, if the string
+    # ends with .git, we remove that
+}
+
+_psql() {
+     if [[ ${1:0:1} == "d" ]]; then
+          myQuery="\\$@"
+     else
+          myQuery="$@"
+     fi
+     [[ -z ${PSQL_DB} ]] && print "PSQL_DB is unset" && return 1
+     psql -U ${PSQL_USER:-postgres} -d ${PSQL_DB} <<< "$myQuery"
+}
+alias p='noglob _psql'
+
 # Makes backspace delete the active selection if it has one
 backward-delete-char() {
     if ((REGION_ACTIVE)) then
