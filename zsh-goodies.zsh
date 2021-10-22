@@ -42,10 +42,8 @@ fi
 
 
 gch() {
-    [ ! -d "${HOME}/gi" ] && mkdir -p "${HOME}/gi"
-    if [[ "$PWD" == "$HOME" ]]; then
-        cd "${HOME}/gi"
-    fi
+    [ ! -d "${HOME}/code" ] && mkdir -p "${HOME}/code"
+    cd "${HOME}/code"
 
     if [[ "${#@}" -lt 1 ]]; then
         repo="$(wl-paste -n)"
