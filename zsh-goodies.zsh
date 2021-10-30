@@ -85,6 +85,10 @@ backward-delete-char() {
         fi
         zle set-mark-command -n -1
     else
+        if [[ "$BUFFER" == "${_ZSH_FILE_OPENER_CMD} " ]]; then
+            printf "\033[J"
+            zle .backward-delete-char
+        fi
         zle .backward-delete-char
     fi
 }
