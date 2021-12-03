@@ -112,16 +112,17 @@ bindkey "\ee" delete_active_selection
 
 cdParentKey() {
     cd ..
-    # print
     clear
-    # zle      reset-prompt
     exa --group-directories-first
-    vcs_info
+    print
+    for cmd in $precmd_functions; do
+        $cmd
+    done
     zle       reset-prompt
 }
 
 zle -N                 cdParentKey
-bindkey '^[[1;3A'      cdParentKey
+bindkey '^[[1;5A'      cdParentKey
 
 
 fancy-ctrl-z () {
@@ -176,8 +177,7 @@ insert_doas() {
     zle up-history
     BUFFER="doas $BUFFER"
     zle end-of-line
-    # zle accept-line
-    }
+}
 zle -N insert_doas
 bindkey -e "!" insert_doas
 
