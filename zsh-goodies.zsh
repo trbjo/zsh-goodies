@@ -311,33 +311,33 @@ aliases[calc]='noglob __calc_plugin'
 aliases[c]='noglob __calc_plugin'
 
 
-mount() {
-    mountpoint="/mnt"
-    if [ $# -eq 0 ]; then
-        newest_disk=$(ls /dev/sd* | sort --ignore-case --sort=version | tail -1)
-        doas mount $newest_disk -o uid=tb $mountpoint || return 1
-    else
-        doas mount /dev/"$1" -o uid=tb $mountpoint || return 1
+# mount() {
+#     mountpoint="/mnt"
+#     if [ $# -eq 0 ]; then
+#         newest_disk=$(ls /dev/sd* | sort --ignore-case --sort=version | tail -1)
+#         doas mount $newest_disk -o uid=tb $mountpoint || return 1
+#     else
+#         doas mount /dev/"$1" -o uid=tb $mountpoint || return 1
 
-    fi
-    cd $mountpoint
-    clear
-    exa --group-directories-first
-}
-_mount() {_path_files -W /dev -g "sd*"}
+#     fi
+#     cd $mountpoint
+#     clear
+#     exa --group-directories-first
+# }
+# _mount() {_path_files -W /dev -g "sd*"}
 
-umount() {
-    if [[ "$(pwd)" =~ "/mnt*" ]]
-    then
-        cd
-    fi
+# umount() {
+#     if [[ "$(pwd)" =~ "/mnt*" ]]
+#     then
+#         cd
+#     fi
 
-    if [ $# -eq 0 ]; then
-        doas umount /mnt
-    else
-        doas umount "$@"
-    fi
-}
+#     if [ $# -eq 0 ]; then
+#         doas umount /mnt
+#     else
+#         doas umount "$@"
+#     fi
+# }
 
 # Store the current input, and restore it with a second ^q
 # also store the cursor pos
