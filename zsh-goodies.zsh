@@ -111,6 +111,7 @@ zle -N delete_active_selection
 bindkey "\ee" delete_active_selection
 
 cdParentKey() {
+    [[ $PWD == '/' ]] && return 0
     cd ..
     clear
     exa --group-directories-first
