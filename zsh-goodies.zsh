@@ -56,6 +56,11 @@ gch() {
         repo="git@github.com:${${repo##*github.com/}%*/}.git"
     fi
 
+    if [[ "$repo" == *git.sr.ht* ]] && [[ ${repo:0:3} != "git" ]]; then
+        # we are cloning from sourcehut, therefore automatically use ssh.
+        repo="git@git.sr.ht:${${repo##*git.sr.ht/}%*/}"
+    fi
+
     git clone "${repo}" &&\
     cd "${${${repo/%\//}##*/}//.git/}"
     # the expr is read inside out. First, if the last char is '/' ('%' means last) we replace it with ''.
