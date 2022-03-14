@@ -1,5 +1,5 @@
 ex() {
-    if [ $# -eq 0 ]; then
+    if [[ $# -eq 0 ]]; then
         cd /home/tb/Export
     else
         cp "$@" /home/tb/Export
@@ -18,11 +18,11 @@ nvm() {
         return 1
     fi
 
-    [ -z "$NVM_DIR" ] && export NVM_DIR="$HOME/.nvm"
+    [[ -z "$NVM_DIR" ]] && export NVM_DIR="$HOME/.nvm"
     source /usr/share/nvm/nvm.sh
     source /usr/share/nvm/bash_completion
     source /usr/share/nvm/install-nvm-exec
-    if [ $# -ne 0 ]; then
+    if [[ $# -ne 0 ]]; then
         nvm $@
     fi
 }
@@ -42,7 +42,7 @@ fi
 
 
 gch() {
-    [ ! -d "${HOME}/code" ] && mkdir -p "${HOME}/code"
+    [[ ! -d "${HOME}/code" ]] && mkdir -p "${HOME}/code"
     cd "${HOME}/code"
 
     if [[ "${#@}" -lt 1 ]]; then
@@ -140,8 +140,7 @@ bindkey '^[[1;5A'      cdParentKey
 fancy-ctrl-z () {
     if [[ $#BUFFER -eq 0 ]]
     then
-        if [ -z $jobstates ]
-        then
+        if [[ -z $jobstates ]]; then
             BUFFER="htop"
             zle accept-line -w
         else
@@ -159,7 +158,7 @@ bindkey '^Z' fancy-ctrl-z
 
 
 go_to_old_pwd() {
-    if [ ! $BUFFER ] ; then
+    if [[ ! $BUFFER ]]; then
         if [[ $PWD != $OLDPWD ]]; then
             local precmd preexec
             for preexec in $preexec_functions
@@ -186,7 +185,7 @@ bindkey -e "^M" go_to_old_pwd
 
 
 insert_doas() {
-    [ $BUFFER ] && LBUFFER+="!" && return 0
+    [[ $BUFFER ]] && LBUFFER+="!" && return 0
     zle up-history
     BUFFER="doas $BUFFER"
     zle end-of-line
@@ -223,8 +222,7 @@ expand-selection() {
 
     # traverse LBUFFER backwards to find beginning of quotes
     while ! [[ $LBUFFER[BEGIN] =~ $quotematch ]]; do
-        if [[ $BEGIN == 1 ]];
-        then
+        if [[ $BEGIN == 1 ]]; then
             return 0
         fi
         let BEGIN=$BEGIN-1
@@ -236,8 +234,7 @@ expand-selection() {
 
     # traverse forwards
     while [[ $RBUFFER[END] != $quotematch ]]; do
-        if [[ $END == ${#RBUFFER} ]];
-        then
+        if [[ $END == ${#RBUFFER} ]]; then
             return 0
         fi
         let END=$END+1
@@ -331,7 +328,7 @@ length() {
     input="$@"
     if [[ ${#input} -eq 0 ]]
     then
-        [ $WAYLAND_DISPLAY ] && input=$(wl-paste --primary) || input=$CUTBUFFER
+        [[ $WAYLAND_DISPLAY ]] && input=$(wl-paste --primary) || input=$CUTBUFFER
     fi
     python3 -c "print(len('$input'))"
 }
@@ -345,34 +342,6 @@ function __calc_plugin {
 aliases[calc]='noglob __calc_plugin'
 aliases[c]='noglob __calc_plugin'
 
-
-# mount() {
-#     mountpoint="/mnt"
-#     if [ $# -eq 0 ]; then
-#         newest_disk=$(ls /dev/sd* | sort --ignore-case --sort=version | tail -1)
-#         doas mount $newest_disk -o uid=tb $mountpoint || return 1
-#     else
-#         doas mount /dev/"$1" -o uid=tb $mountpoint || return 1
-
-#     fi
-#     cd $mountpoint
-#     clear
-#     exa --group-directories-first
-# }
-# _mount() {_path_files -W /dev -g "sd*"}
-
-# umount() {
-#     if [[ "$(pwd)" =~ "/mnt*" ]]
-#     then
-#         cd
-#     fi
-
-#     if [ $# -eq 0 ]; then
-#         doas umount /mnt
-#     else
-#         doas umount "$@"
-#     fi
-# }
 
 # Store the current input, and restore it with a second ^q
 # also store the cursor pos
@@ -395,7 +364,7 @@ bindkey '^Q' remember
 # Makes tab repeat the last command if the buffer is empty.
 # Otherwise workes as normal
 repeat-last-command-or-complete-entry() {
-    if [ -z "$BUFFER" ]; then
+    if [[ -z "$BUFFER" ]]; then
         zle up-history
         [[ "${BUFFER:0:2}" != "${_ZSH_FILE_OPENER_CMD} " ]] && zle accept-line
     else
