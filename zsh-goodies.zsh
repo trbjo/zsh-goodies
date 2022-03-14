@@ -133,7 +133,6 @@ cdParentKey() {
     done
     zle       reset-prompt
 }
-
 zle -N                 cdParentKey
 bindkey '^[[1;5A'      cdParentKey
 
