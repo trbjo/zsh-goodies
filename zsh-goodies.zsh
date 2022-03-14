@@ -196,25 +196,6 @@ zle -N insert_doas
 bindkey -e "!" insert_doas
 
 
-wrapper() {
-    [ $WIDGET == "wrapper-double" ] && quote='"' || quote="'"
-    if ((REGION_ACTIVE)); then
-        if [[ $CURSOR -gt $MARK ]]; then
-            BUFFER=$BUFFER[0,MARK]$quote$BUFFER[MARK+1,CURSOR]$quote$BUFFER[CURSOR+1,-1]
-            CURSOR+=2
-        else
-            BUFFER=$BUFFER[0,CURSOR]$quote$BUFFER[CURSOR+1,MARK]$quote$BUFFER[MARK+1,-1]
-        fi
-        zle set-mark-command -n -1
-else
-    LBUFFER+=$quote
-fi
-}
-zle -N wrapper-single wrapper
-zle -N wrapper-double wrapper
-bindkey "\"" wrapper-double
-bindkey "'" wrapper-single
-
 expand-selection() {
     local quotematch
     local BEGIN=${#LBUFFER}
