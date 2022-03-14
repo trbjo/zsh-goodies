@@ -328,16 +328,19 @@ zle -N insert-single-quote
 bindkey "'" insert-single-quote
 
 insert-mark() {
-    LBUFFER+=$leftmark
     if ((REGION_ACTIVE)); then
         if [[ $CURSOR -gt $MARK ]]; then
-            BUFFER="$BUFFER[0,MARK]${rightmark}$BUFFER[$MARK+1,-1]"
+            BUFFER="$BUFFER[0,$MARK]${leftmark}$BUFFER[$MARK+1,$CURSOR]${rightmark}$BUFFER[$CURSOR+1,-1]"
+            CURSOR+=2
         else
-            BUFFER="$BUFFER[0,MARK+1]${rightmark}$BUFFER[MARK+2,-1]"
+            BUFFER="$BUFFER[0,$CURSOR]${leftmark}$BUFFER[$CURSOR+1,$MARK]${rightmark}$BUFFER[$MARK+1,-1]"
         fi
         zle set-mark-command -n -1
-    elif [[ -z "$RBUFFER" ]] && [[ "${LBUFFER: -2}" == " ${leftmark}" ]]; then
-        RBUFFER="$rightmark"
+    else
+        LBUFFER+="$leftmark"
+        if [[ -z "$RBUFFER" ]] && [[ "${LBUFFER: -2}" == " ${leftmark}" ]]; then
+            RBUFFER="$rightmark"
+        fi
     fi
     zle redisplay
 }
