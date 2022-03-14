@@ -79,7 +79,7 @@ _psql() {
 }
 alias p='noglob _psql'
 
-# Makes backspace delete the active selection if it has one
+typeset -gA __matchers=("\"" "\"" "'" "'" "[" "]" "(" ")" "{" "}")
 backward-delete-char() {
     if ((REGION_ACTIVE)) then
         if [[ $CURSOR -gt $MARK ]]; then
@@ -93,8 +93,15 @@ backward-delete-char() {
         if [[ "$BUFFER" == "${_ZSH_FILE_OPENER_CMD} " ]]; then
             printf "\033[J"
             zle .backward-delete-char
+            zle .backward-delete-char
+        else
+            local left_char="${LBUFFER: -1}"
+            local right_char="${RBUFFER:0:1}"
+            if [[ -n "$right_char" ]] && [[ "${__matchers[$left_char]}" == "$right_char" ]]; then
+                zle .delete-char
+            fi
+            zle .backward-delete-char
         fi
-        zle .backward-delete-char
     fi
 }
 zle -N backward-delete-char
@@ -169,6 +176,7 @@ go_to_old_pwd() {
             zle reset-prompt
         fi
     else
+        unset __autosuggest_override_init
         #trim trailing spaces
         BUFFER="${BUFFER%%[[:blank:]]#}"
         zle accept-line
@@ -208,57 +216,58 @@ bindkey "\"" wrapper-double
 bindkey "'" wrapper-single
 
 expand-selection() {
-        BEGIN=${#LBUFFER}
-        END=0
+    local quotematch
+    local BEGIN=${#LBUFFER}
+    local END=0
 
-        # if we have an active selection, we assume it was expanded with
-        # this method and we ignore it by offsetting the indexes by 1
-        if ((REGION_ACTIVE)); then
+    # if we have an active selection, we assume it was expanded with
+    # this method and we ignore it by offsetting the indexes by 1
+    if ((REGION_ACTIVE)); then
 
-            # we store the current selection for the undo widget:
-            UNDO_BEGIN_REGION=$MARK
-            UNDO_END_REGION=$CURSOR
+        # we store the current selection for the undo widget:
+        UNDO_BEGIN_REGION=$MARK
+        UNDO_END_REGION=$CURSOR
 
-            let BEGIN=$(( ${#LBUFFER} - $CURSOR + $MARK -1))
-            let END+=1
-            # we check if we should expand for ' or "
-            if [[ "${BUFFER[MARK]}" == '"' ]]; then
-                quotematch=^\'$
-            else
-                quotematch=^\"$
-            fi
+        let BEGIN=$(( ${#LBUFFER} - $CURSOR + $MARK -1))
+        let END+=1
+        # we check if we should expand for ' or "
+        if [[ "${BUFFER[MARK]}" == '"' ]]; then
+            quotematch=^\'$
         else
-            # no selection, we expand for either
-            quotematch=^\'\|\"$
+            quotematch=^\"$
         fi
+    else
+        # no selection, we expand for either
+        quotematch=^\'\|\"$
+    fi
 
-        # traverse LBUFFER backwards to find beginning of quotes
-        while ! [[ $LBUFFER[BEGIN] =~ $quotematch ]]; do
-            if [[ $BEGIN == 1 ]];
-            then
-                return 0
-            fi
-            let BEGIN=$BEGIN-1
-        done
+    # traverse LBUFFER backwards to find beginning of quotes
+    while ! [[ $LBUFFER[BEGIN] =~ $quotematch ]]; do
+        if [[ $BEGIN == 1 ]];
+        then
+            return 0
+        fi
+        let BEGIN=$BEGIN-1
+    done
 
-        # we now know what matched, so we only check for the char
-        # of the left match ignoring the regex,
-        quotematch="${LBUFFER[BEGIN]}"
+    # we now know what matched, so we only check for the char
+    # of the left match ignoring the regex,
+    quotematch="${LBUFFER[BEGIN]}"
 
-        # traverse forwards
-        while [[ $RBUFFER[END] != $quotematch ]]; do
-            if [[ $END == ${#RBUFFER} ]];
-            then
-                return 0
-            fi
-            let END=$END+1
-        done
+    # traverse forwards
+    while [[ $RBUFFER[END] != $quotematch ]]; do
+        if [[ $END == ${#RBUFFER} ]];
+        then
+            return 0
+        fi
+        let END=$END+1
+    done
 
-        LENGTHOFLSTRING=$(( ${#LBUFFER} - $BEGIN ))
-        CURSOR=$BEGIN
-        zle set-mark-command
-        CURSOR+=$(( $LENGTHOFLSTRING + $END - 1))
-        zle redisplay
+    LENGTHOFLSTRING=$(( ${#LBUFFER} - $BEGIN ))
+    CURSOR=$BEGIN
+    zle set-mark-command
+    CURSOR+=$(( $LENGTHOFLSTRING + $END - 1))
+    zle redisplay
 }
 zle -N expand-selection
 bindkey -e "^s" expand-selection
@@ -278,24 +287,61 @@ zle -N undo
 bindkey -e "^_" undo
 
 
-
-insert-brace() {
-    LBUFFER+={
-    RBUFFER=}$RBUFFER
-    zle redisplay
-}
-zle -N insert-brace
-bindkey "{" insert-brace
-
 insert-bracket() {
-    LBUFFER+=[
-    RBUFFER=]$RBUFFER
-    zle redisplay
+    local leftmark='['
+    local rightmark=']'
+    zle insert-mark
 }
 zle -N insert-bracket
 bindkey "[" insert-bracket
 
+insert-brace() {
+    local leftmark='{'
+    local rightmark='}'
+    zle insert-mark
+}
+zle -N insert-brace
+bindkey "{" insert-brace
 
+insert-parenthesis() {
+    local leftmark='('
+    local rightmark=')'
+    zle insert-mark
+}
+zle -N insert-parenthesis
+bindkey "(" insert-parenthesis
+
+insert-double-quote() {
+    local leftmark='"'
+    local rightmark='"'
+    zle insert-mark
+}
+zle -N insert-double-quote
+bindkey '"' insert-double-quote
+
+insert-single-quote() {
+    local leftmark="'"
+    local rightmark="'"
+    zle insert-mark
+}
+zle -N insert-single-quote
+bindkey "'" insert-single-quote
+
+insert-mark() {
+    LBUFFER+=$leftmark
+    if ((REGION_ACTIVE)); then
+        if [[ $CURSOR -gt $MARK ]]; then
+            BUFFER="$BUFFER[0,MARK]${rightmark}$BUFFER[$MARK+1,-1]"
+        else
+            BUFFER="$BUFFER[0,MARK+1]${rightmark}$BUFFER[MARK+2,-1]"
+        fi
+        zle set-mark-command -n -1
+    elif [[ -z "$RBUFFER" ]] && [[ "${LBUFFER: -2}" == " ${leftmark}" ]]; then
+        RBUFFER="$rightmark"
+    fi
+    zle redisplay
+}
+zle -N insert-mark
 
 # get the length of a string
 length() {
@@ -380,3 +426,68 @@ bindkey '\t' repeat-last-command-or-complete-entry
 groot() {
     gittest=$(git rev-parse --show-toplevel) > /dev/null 2>&1 && cd $gittest || print "Not in a git dir"
 }
+
+# if the parent widget is not found, we exit
+[[ $ZSH_AUTOSUGGEST_CLEAR_WIDGETS ]] || return
+
+if command -v exa > /dev/null 2>&1; then
+    _file_lister='exa'
+else
+    _file_lister='ls'
+fi
+
+export __autosuggest_override_init=true
+unfunction _zsh_autosuggest_execute
+_zsh_autosuggest_execute() {
+    if [[ $BUFFER ]]; then
+        # Add the suggestion to the buffer
+        BUFFER+="${POSTDISPLAY}"
+
+        # Remove the suggestion
+        [[ $POSTDISPLAY ]] && unset POSTDISPLAY || BUFFER="${BUFFER%%[[:blank:]]#}"
+
+        # Call the original `accept-line` to handle syntax highlighting or
+        # other potential custom behavior
+        _zsh_autosuggest_invoke_original_widget "accept-line"
+    else
+        control_git_sideeffects_preexec
+        print -n '\033[2J\033[3J\033[H' # hide cursor and clear screen
+        if [[ "$__autosuggest_override_init" ]] && [[ -z $SSH_CONNECTION ]]; then
+            $_file_lister --color=auto --group-directories-first
+            unset __autosuggest_override_init
+            print
+        else
+            __myvar=1
+        fi
+        preprompt
+        zle reset-prompt
+    fi
+
+    _zsh_autosuggest_execute() {
+        if [[ $BUFFER ]]; then
+            # Add the suggestion to the buffer
+            BUFFER+="${POSTDISPLAY}"
+
+            # Remove the suggestion
+            [[ $POSTDISPLAY ]] && unset POSTDISPLAY || BUFFER="${BUFFER%%[[:blank:]]#}"
+
+            # Call the original `accept-line` to handle syntax highlighting or
+            # other potential custom behavior
+            _zsh_autosuggest_invoke_original_widget "accept-line"
+        else
+            control_git_sideeffects_preexec
+            print -n '\033[2J\033[3J\033[H' # hide cursor and clear screen
+            if [[ "${LASTWIDGET}" == "autosuggest-execute" ]] && [[ ${__myvar} ]]
+            then
+                $_file_lister --color=auto --group-directories-first
+                print
+                unset __myvar
+            else
+                __myvar=1
+            fi
+            preprompt
+            zle reset-prompt
+        fi
+    }
+}
+bindkey -e '\e' autosuggest-execute
