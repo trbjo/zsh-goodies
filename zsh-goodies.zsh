@@ -244,7 +244,6 @@ expand-selection() {
     CURSOR=$BEGIN
     zle set-mark-command
     CURSOR+=$(( $LENGTHOFLSTRING + $END - 1))
-    zle redisplay
 }
 zle -N expand-selection
 bindkey -e "^s" expand-selection
@@ -255,7 +254,6 @@ undo() {
         zle set-mark-command
         MARK=$UNDO_BEGIN_REGION
         CURSOR=$UNDO_END_REGION
-        zle redisplay
     else
         zle .undo
     fi
@@ -319,7 +317,6 @@ insert-mark() {
             RBUFFER="$rightmark"
         fi
     fi
-    zle redisplay
 }
 zle -N insert-mark
 
