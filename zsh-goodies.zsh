@@ -359,15 +359,24 @@ zle -N remember
 bindkey '^Q' remember
 
 # Makes tab repeat the last command if the buffer is empty.
+# if the char to the right of the cursor is a 'closer', tab moves one char to the right
 # Otherwise workes as normal
+typeset -ga __closers=("\"" "'" "]" ")" "}")
 repeat-last-command-or-complete-entry() {
     if [[ -z "$BUFFER" ]]; then
         zle up-history
         [[ "${BUFFER:0:2}" != "${_ZSH_FILE_OPENER_CMD} " ]] && zle accept-line
-    else
-        [[ ! -z $pending_git_status_pid ]] && kill $pending_git_status_pid > /dev/null 2>&1 && unset pending_git_status_pid
-        zle expand-or-complete
+        return
     fi
+
+    local right_char="${RBUFFER:0:1}"
+    if [[ ${__closers[(i)$right_char]} -le 5 ]]; then
+        zle .forward-char
+        return
+    fi
+
+    [[ ! -z $pending_git_status_pid ]] && kill $pending_git_status_pid > /dev/null 2>&1 && unset pending_git_status_pid
+    zle expand-or-complete
 }
 zle -N repeat-last-command-or-complete-entry
 bindkey '\t' repeat-last-command-or-complete-entry
