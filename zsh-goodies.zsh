@@ -347,7 +347,7 @@ remember() {
     if [[ $#BUFFER -eq 0 ]]; then
         BUFFER="${stored}"
         CURSOR=$mycursor
-        typeset -f _zsh_highlight > /dev/null && _zsh_highlight
+        _zsh_highlight
     # Store current input.
     else
         mycursor=$CURSOR
