@@ -96,9 +96,12 @@ backward-delete-char() {
             zle .backward-delete-char
         else
             local left_char="${LBUFFER: -1}"
+            local left_left_char="${LBUFFER: -2:1}"
             local right_char="${RBUFFER:0:1}"
-            if [[ -n "$right_char" ]] && [[ "${__matchers[$left_char]}" == "$right_char" ]]; then
+            if [[ -n "$left_char" ]] && [[ -n "$right_char" ]] && [[ "${__matchers[$left_char]}" == "$right_char" ]]; then
                 zle .delete-char
+            elif [[ -n "$left_char" ]] && [[ -n "$left_left_char" ]] && [[ "${__matchers[$left_left_char]}" == "$left_char" ]]; then
+                zle .backward-delete-char
             fi
             zle .backward-delete-char
         fi
