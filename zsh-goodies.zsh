@@ -79,8 +79,72 @@ _psql() {
 }
 alias p='noglob _psql'
 
+# navigate dirs with backspace/shift+backspace
+setopt AUTO_PUSHD
+typeset -a _dirstack
+typeset -a mydirs
+teste() {
+    # mydirs is not regulated when we push to the stack,
+    # so we have to check for elements manually:
+    [[ "${mydirs[-1]}" == "$PWD" ]] && mydirs[-1]=()
+    [[  ${#mydirs} -lt 1 ]] && return
+
+    for (( i = 1; i <= ${#dirstack[@]}; i++ )) do
+        if [[ "$dirstack[$i]" != "$_dirstack[$i]" ]]; then
+            mydirs=()
+            _dirstack=()
+            return
+        fi
+    done
+
+    local preexec precmd
+    for preexec in $preexec_functions
+    do
+        $preexec
+    done
+    _dirstack=("$PWD" "$_dirstack[@]")
+    cd "${mydirs[-1]}" > /dev/null 2>&1
+    mydirs[-1]=()
+    print -n "\033[F\r"
+    for precmd in $precmd_functions
+    do
+        $precmd
+    done
+    zle reset-prompt
+    return 0
+    }
+zle -N teste
+bindkey '^]' teste
+
 typeset -gA __matchers=("\"" "\"" "'" "'" "[" "]" "(" ")" "{" "}")
 backward-delete-char() {
+    # goes back in the cd history
+    if [[ -z "$BUFFER" ]]; then
+        for (( i = 1; i <= ${#dirstack[@]}; i++ )) do
+            if [[ "$dirstack[$i]" != "$_dirstack[$i]" ]]; then
+                mydirs=()
+                break
+            fi
+        done
+        [[ "${dirstack[1]}" == "$PWD" ]] && popd > /dev/null 2>&1
+        [[  ${#dirstack} -lt 1 ]] && return
+        [[ "${mydirs[-1]}" == "$PWD" ]] || mydirs+=("$PWD")
+        local preexec precmd
+        for preexec in $preexec_functions
+        do
+            $preexec
+        done
+        popd > /dev/null 2>&1
+        _dirstack=($dirstack[@])
+        print -n "\033[F\r"
+        for precmd in $precmd_functions
+        do
+            $precmd
+        done
+        zle reset-prompt
+        return 0
+    fi
+
     if ((REGION_ACTIVE)) then
         if [[ $CURSOR -gt $MARK ]]; then
             BUFFER=$BUFFER[0,MARK]$BUFFER[CURSOR+1,-1]
@@ -158,33 +222,6 @@ fancy-ctrl-z () {
 }
 zle -N fancy-ctrl-z
 bindkey '^Z' fancy-ctrl-z
-
-
-go_to_old_pwd() {
-    if [[ ! $BUFFER ]]; then
-        if [[ $PWD != $OLDPWD ]]; then
-            local precmd preexec
-            for preexec in $preexec_functions
-            do
-                $preexec
-            done
-            cd - > /dev/null 2>&1
-            print
-            for precmd in $precmd_functions
-            do
-                $precmd
-            done
-            zle reset-prompt
-        fi
-    else
-        unset __autosuggest_override_init
-        #trim trailing spaces
-        BUFFER="${BUFFER%%[[:blank:]]#}"
-        zle accept-line
-    fi
-}
-zle -N go_to_old_pwd
-bindkey -e "^M" go_to_old_pwd
 
 
 insert_doas() {
