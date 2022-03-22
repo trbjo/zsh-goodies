@@ -247,6 +247,7 @@ expand-selection() {
     CURSOR=$BEGIN
     zle set-mark-command
     CURSOR+=$(( $LENGTHOFLSTRING + $END - 1))
+    zle reset-prompt
 }
 zle -N expand-selection
 bindkey -e "^s" expand-selection
