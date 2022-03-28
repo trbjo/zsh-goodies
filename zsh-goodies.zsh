@@ -421,13 +421,14 @@ repeat-last-command-or-complete-entry() {
 }
 zle -N repeat-last-command-or-complete-entry
 bindkey '\t' repeat-last-command-or-complete-entry
+(( ${+ZSH_AUTOSUGGEST_CLEAR_WIDGETS} )) && ZSH_AUTOSUGGEST_CLEAR_WIDGETS+=(repeat-last-command-or-complete-entry)
 
 groot() {
     gittest=$(git rev-parse --show-toplevel) > /dev/null 2>&1 && cd $gittest || print "Not in a git dir"
 }
 
 # if the parent widget is not found, we exit
-[[ $ZSH_AUTOSUGGEST_CLEAR_WIDGETS ]] || return
+(( ${+ZSH_AUTOSUGGEST_CLEAR_WIDGETS} )) || return 0
 
 if command -v exa > /dev/null 2>&1; then
     _file_lister='exa'
