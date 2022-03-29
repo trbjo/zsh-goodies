@@ -1,11 +1,3 @@
-ex() {
-    if [[ $# -eq 0 ]]; then
-        cd /home/tb/Export
-    else
-        cp "$@" /home/tb/Export
-    fi
-}
-
 mkcd() {
   command mkdir -p "$1"
   cd "$1"
@@ -41,25 +33,18 @@ if command -v curlie > /dev/null 2>&1; then
 fi
 
 
-gch() {
+gcl() {
     [[ ! -d "${HOME}/code" ]] && mkdir -p "${HOME}/code"
     cd "${HOME}/code"
-
-    if [[ "${#@}" -lt 1 ]]; then
-        repo="$(wl-paste -n)"
-    else
-        repo="$1"
-    fi
-
-    if [[ "$repo" == *github.com* ]] && [[ ${repo:0:3} != "git" ]]; then
-        # we are cloning from github, therefore automatically use ssh.
-        repo="git@github.com:${${repo##*github.com/}%*/}.git"
-    fi
-
-    if [[ "$repo" == *git.sr.ht* ]] && [[ ${repo:0:3} != "git" ]]; then
-        # we are cloning from sourcehut, therefore automatically use ssh.
-        repo="git@git.sr.ht:${${repo##*git.sr.ht/}%*/}"
-    fi
+    local -a elements
+    local repo
+    elements=("${(@s:/:)1}")
+    for ((i = 1; i < ${#elements}; i++)); do
+        if [[ "${elements[$i]}" == *git.sr.ht* ]] || [[ "${elements[$i]}" == *github.com* ]]; then
+            repo="git@${elements[$i]}:${elements[$i+1]}/${elements[$i+2]}"
+            break
+        fi
+    done
 
     git clone "${repo}" &&\
     cd "${${${repo/%\//}##*/}//.git/}"
