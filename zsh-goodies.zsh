@@ -219,6 +219,15 @@ zle -N insert_doas
 bindkey -e "!" insert_doas
 
 
+# - - - - - - - - - - - - - - - - - - - -
+# - - - - - - URL HANDLING- - - - - - - -
+# - - - - - - - - - - - - - - - - - - - -
+
+autoload -Uz bracketed-paste-url-magic url-quote-magic
+zle -N bracketed-paste bracketed-paste-url-magic
+zle -N self-insert url-quote-magic
+(( ${+ZSH_AUTOSUGGEST_CLEAR_WIDGETS} )) && ZSH_AUTOSUGGEST_CLEAR_WIDGETS+=('bracketed-paste-url-magic' 'url-quote-magic')
+
 expand-selection() {
     local quotematch
     local BEGIN=${#LBUFFER}
