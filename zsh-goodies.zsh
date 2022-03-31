@@ -428,7 +428,7 @@ _zsh_autosuggest_execute() {
         BUFFER+="${POSTDISPLAY}"
 
         # Remove the suggestion
-        [[ $POSTDISPLAY ]] && unset POSTDISPLAY || BUFFER="${BUFFER%%[[:blank:]]#}"
+        unset POSTDISPLAY
 
         # Call the original `accept-line` to handle syntax highlighting or
         # other potential custom behavior
@@ -453,7 +453,7 @@ _zsh_autosuggest_execute() {
             BUFFER+="${POSTDISPLAY}"
 
             # Remove the suggestion
-            [[ $POSTDISPLAY ]] && unset POSTDISPLAY || BUFFER="${BUFFER%%[[:blank:]]#}"
+            unset POSTDISPLAY
 
             # Call the original `accept-line` to handle syntax highlighting or
             # other potential custom behavior
