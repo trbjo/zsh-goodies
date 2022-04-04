@@ -73,11 +73,12 @@ teste() {
     # so we have to check for elements manually:
     [[ "${mydirs[-1]}" == "$PWD" ]] && mydirs[-1]=()
     [[  ${#mydirs} -lt 1 ]] && return
-
+    print -n '\e[?25l'
     for (( i = 1; i <= ${#dirstack[@]}; i++ )) do
         if [[ "$dirstack[$i]" != "$_dirstack[$i]" ]]; then
             mydirs=()
             _dirstack=()
+            print -n '\e[?25h'
             return
         fi
     done
@@ -96,6 +97,7 @@ teste() {
         $precmd
     done
     zle reset-prompt
+    print -n '\e[?25h'
     return 0
     }
 zle -N teste
@@ -105,6 +107,7 @@ typeset -gA __matchers=("\"" "\"" "'" "'" "[" "]" "(" ")" "{" "}")
 backward-delete-char() {
     # goes back in the cd history
     if [[ -z "$BUFFER" ]]; then
+        print -n '\e[?25l'
         for (( i = 1; i <= ${#dirstack[@]}; i++ )) do
             if [[ "$dirstack[$i]" != "$_dirstack[$i]" ]]; then
                 mydirs=()
@@ -112,7 +115,7 @@ backward-delete-char() {
             fi
         done
         [[ "${dirstack[1]}" == "$PWD" ]] && popd > /dev/null 2>&1
-        [[  ${#dirstack} -lt 1 ]] && return
+        [[  ${#dirstack} -lt 1 ]] && print -n '\e[?25h' && return
         [[ "${mydirs[-1]}" == "$PWD" ]] || mydirs+=("$PWD")
         local preexec precmd
         for preexec in $preexec_functions
@@ -127,6 +130,7 @@ backward-delete-char() {
             $precmd
         done
         zle reset-prompt
+        print -n '\e[?25h'
         return 0
     fi
 
