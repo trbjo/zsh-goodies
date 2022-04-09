@@ -3,6 +3,28 @@ mkcd() {
   cd "$1"
 }
 
+up() {
+  local op=print
+  [[ -t 1 ]] && op=cd
+  case "$1" in
+    '') up 1;;
+    -*|+*) $op ~$1;;
+    <->) $op $(printf '../%.0s' {1..$1});;
+    @) local cdup; cdup=$(git rev-parse --show-cdup) && $op $cdup;;
+    *) local -a seg; seg=(${(s:/:)PWD%/*})
+       local n=${(j:/:)seg[1,(I)$1*]}
+       if [[ -n $n ]]; then
+         $op /$n
+       else
+         print -u2 up: could not find prefix $1 in $PWD
+         return 1
+       fi
+  esac
+}
+
+_up() { compadd -V segments -- ${(Oas:/:)${PWD%/*}} }
+compdef _up up
+
 # nvm takes too long to source, we only source it if we need to
 nvm() {
     if [[ ! -d /usr/share/nvm ]]; then
