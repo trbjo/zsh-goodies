@@ -181,6 +181,7 @@ backward-delete-char() {
             zle .backward-delete-char
         fi
     fi
+    _zsh_highlight
 }
 zle -N backward-delete-char
 bindkey "^?" backward-delete-char
