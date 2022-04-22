@@ -443,3 +443,6 @@ _zsh_autosuggest_execute() {
     }
 }
 bindkey -e '\e' autosuggest-execute
+
+zmodload -i zsh/complist
+bindkey -M menuselect '\e' .accept-line
