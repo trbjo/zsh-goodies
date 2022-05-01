@@ -86,47 +86,6 @@ _psql() {
 }
 alias p='noglob _psql'
 
-# navigate dirs with backspace/shift+backspace
-setopt AUTO_PUSHD
-typeset -a _dirstack
-typeset -a mydirs
-teste() {
-    # mydirs is not regulated when we push to the stack,
-    # so we have to check for elements manually:
-    [[ "${mydirs[-1]}" == "$PWD" ]] && mydirs[-1]=()
-    [[  ${#mydirs} -lt 1 ]] && return
-    print -n '\e[?25l'
-    for (( i = 1; i <= ${#dirstack[@]}; i++ )) do
-        if [[ "$dirstack[$i]" != "$_dirstack[$i]" ]]; then
-            mydirs=()
-            _dirstack=()
-            print -n '\e[?25h'
-            return
-        fi
-    done
-
-    local preexec precmd
-    for preexec in $preexec_functions
-    do
-        $preexec
-    done
-    _dirstack=("$PWD" "$_dirstack[@]")
-    cd "${mydirs[-1]}" > /dev/null 2>&1
-    mydirs[-1]=()
-    print -n "\033[F\r"
-    for precmd in $precmd_functions
-    do
-        $precmd
-    done
-    zle reset-prompt
-    print -n '\e[?25h'
-    return 0
-    }
-zle -N teste
-bindkey '^]' teste
-
-typeset -gA __matchers=("\"" "\"" "'" "'" "[" "]" "(" ")" "{" "}")
-
 # this is meant to be bound to the same key as the terminal paste key
 delete_active_selection() {
     if ((REGION_ACTIVE)) then
