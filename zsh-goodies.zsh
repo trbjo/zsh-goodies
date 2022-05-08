@@ -361,12 +361,11 @@ _zsh_autosuggest_execute() {
         # other potential custom behavior
         _zsh_autosuggest_invoke_original_widget "accept-line"
     else
-        control_git_sideeffects_preexec
-        print -n '\033[2J\033[3J\033[H' # hide cursor and clear screen
+        print -n '\e[2J\e[3J\e[H' # hide cursor and clear screen
         if [[ "$__autosuggest_override_init" ]] && [[ -z $SSH_CONNECTION ]]; then
             $_file_lister --color=auto --group-directories-first
-            unset __autosuggest_override_init
             print
+            unset __autosuggest_override_init
         else
             __myvar=1
         fi
@@ -386,7 +385,6 @@ _zsh_autosuggest_execute() {
             # other potential custom behavior
             _zsh_autosuggest_invoke_original_widget "accept-line"
         else
-            control_git_sideeffects_preexec
             print -n '\033[2J\033[3J\033[H' # hide cursor and clear screen
             if [[ "${LASTWIDGET}" == "autosuggest-execute" ]] && [[ ${__myvar} ]]
             then
