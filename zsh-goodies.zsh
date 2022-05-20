@@ -347,7 +347,6 @@ else
     _file_lister='ls'
 fi
 
-export __autosuggest_override_init=true
 unfunction _zsh_autosuggest_execute
 _zsh_autosuggest_execute() {
     if [[ $BUFFER ]]; then
@@ -362,10 +361,9 @@ _zsh_autosuggest_execute() {
         _zsh_autosuggest_invoke_original_widget "accept-line"
     else
         print -n '\e[2J\e[3J\e[H' # hide cursor and clear screen
-        if [[ "$__autosuggest_override_init" ]] && [[ -z $SSH_CONNECTION ]]; then
+        if [[ -z $SSH_CONNECTION ]]; then
             $_file_lister --color=auto --group-directories-first
             print
-            unset __autosuggest_override_init
         else
             __myvar=1
         fi
