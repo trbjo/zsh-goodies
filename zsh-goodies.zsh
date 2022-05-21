@@ -347,57 +347,39 @@ else
     _file_lister='ls'
 fi
 
-unfunction _zsh_autosuggest_execute
-_zsh_autosuggest_execute() {
+function _yeah() {
     if [[ $BUFFER ]]; then
-        # Add the suggestion to the buffer
         BUFFER+="${POSTDISPLAY}"
-
-        # Remove the suggestion
         unset POSTDISPLAY
-
-        # Call the original `accept-line` to handle syntax highlighting or
-        # other potential custom behavior
         _zsh_autosuggest_invoke_original_widget "accept-line"
     else
-        print -n '\e[2J\e[3J\e[H' # hide cursor and clear screen
-        if [[ -z $SSH_CONNECTION ]]; then
-            $_file_lister --color=auto --group-directories-first
-            print
+        print -n '\033[2J\033[3J\033[H' # hide cursor and clear screen
+        if [[ "${LASTWIDGET}" == "_yeah" ]]; then
+            redefine
         else
-            __myvar=1
+            redefine::reset
         fi
         preprompt
         zle reset-prompt
     fi
-
-    _zsh_autosuggest_execute() {
-        if [[ $BUFFER ]]; then
-            # Add the suggestion to the buffer
-            BUFFER+="${POSTDISPLAY}"
-
-            # Remove the suggestion
-            unset POSTDISPLAY
-
-            # Call the original `accept-line` to handle syntax highlighting or
-            # other potential custom behavior
-            _zsh_autosuggest_invoke_original_widget "accept-line"
-        else
-            print -n '\033[2J\033[3J\033[H' # hide cursor and clear screen
-            if [[ "${LASTWIDGET}" == "autosuggest-execute" ]] && [[ ${__myvar} ]]
-            then
-                $_file_lister --color=auto --group-directories-first
-                print
-                unset __myvar
-            else
-                __myvar=1
-            fi
-            preprompt
-            zle reset-prompt
-        fi
-    }
 }
-bindkey -e '\e' autosuggest-execute
+zle -N _yeah
+bindkey -e '\e' _yeah
+
+redefine::reset() {
+    redefine::reset() {
+        redefine() {
+            $_file_lister --color=auto --group-directories-first && print
+            redefine() {
+                redefine::reset
+            }
+        }
+    }
+    redefine::reset
+    if [[ -z $ZLAST_COMMANDS ]]; then
+        redefine
+    fi
+}
 
 zmodload -i zsh/complist
 bindkey -M menuselect '\e' .accept-line
