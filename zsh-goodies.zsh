@@ -145,6 +145,68 @@ insert_doas() {
 zle -N insert_doas
 bindkey -e "!" insert_doas
 
+sneak_forward() {
+    [[ -z "$BUFFER" ]] && return
+    read -k 1 key
+    for (( i = 1; i < $#RBUFFER; i++ )); do
+        if [[ "${RBUFFER[i]}" == "$key" ]]; then
+            (( CURSOR+= $i ))
+            zle redisplay
+            break
+        fi
+    done
+    while true; do
+        read -k 1 var
+        if [[ "$var" == $'\r' ]]; then
+            for (( i = 1; i < $#RBUFFER; i++ )); do
+                if [[ "${RBUFFER[i]}" == "$key" ]]; then
+                    (( CURSOR+= $i ))
+                    zle redisplay
+                    continue 2
+                fi
+            done
+            zle end-of-buffer
+            return
+        else
+            zle -U "$var"
+            return
+        fi
+    done
+}
+zle -N sneak_forward
+bindkey -e "^T" sneak_forward
+
+sneak_backward() {
+    [[ -z "$BUFFER" ]] && return
+    read -k 1 key
+    for (( i = 1; i < $#LBUFFER; i++ )); do
+        if [[ "${LBUFFER[$#LBUFFER-i]}" == "$key" ]]; then
+            (( CURSOR-= $i ))
+            zle redisplay
+            break
+        fi
+    done
+    while true; do
+        read -k 1 var
+        if [[ "$var" == $'\r' ]]; then
+            for (( i = 1; i < $#LBUFFER; i++ )); do
+                if [[ "${LBUFFER[$#LBUFFER-i]}" == "$key" ]]; then
+                    (( CURSOR-= $i ))
+                    zle redisplay
+                    continue 2
+                fi
+            done
+            zle beginning-of-buffer
+            return
+        else
+            zle -U "$var"
+            return
+        fi
+    done
+}
+zle -N sneak_backward
+bindkey -e "^B" sneak_backward
+
 expand-selection() {
     local quotematch
     local BEGIN=${#LBUFFER}
