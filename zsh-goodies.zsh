@@ -165,7 +165,8 @@ sneak_forward() {
                     continue 2
                 fi
             done
-            zle end-of-buffer
+            CURSOR=${#BUFFER}
+            zle end-of-line -w
             return
         else
             zle -U "$var"
@@ -196,7 +197,8 @@ sneak_backward() {
                     continue 2
                 fi
             done
-            zle beginning-of-buffer
+            CURSOR=0
+            zle beginning-of-line -w
             return
         else
             zle -U "$var"
