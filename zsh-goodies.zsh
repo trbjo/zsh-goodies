@@ -146,7 +146,7 @@ zle -N insert_doas
 bindkey -e "!" insert_doas
 
 sneak_forward() {
-    [[ -z "$BUFFER" ]] && return
+    [[ -z "$RBUFFER" ]] && return
     read -k 1 key
     for (( i = 1; i < $#RBUFFER; i++ )); do
         if [[ "${RBUFFER[i]}" == "$key" ]]; then
@@ -178,7 +178,7 @@ zle -N sneak_forward
 bindkey -e "^T" sneak_forward
 
 sneak_backward() {
-    [[ -z "$BUFFER" ]] && return
+    [[ -z "$LBUFFER" ]] && return
     read -k 1 key
     for (( i = 1; i < $#LBUFFER; i++ )); do
         if [[ "${LBUFFER[$#LBUFFER-i]}" == "$key" ]]; then
