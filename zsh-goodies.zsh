@@ -401,9 +401,6 @@ groot() {
     gittest=$(git rev-parse --show-toplevel) > /dev/null 2>&1 && cd $gittest || print "Not in a git dir"
 }
 
-# if the parent widget is not found, we exit
-(( ${+ZSH_AUTOSUGGEST_CLEAR_WIDGETS} )) || return 0
-
 if command -v exa > /dev/null 2>&1; then
     _file_lister='exa'
 else
@@ -414,7 +411,7 @@ function _yeah() {
     if [[ $BUFFER ]]; then
         BUFFER+="${POSTDISPLAY}"
         unset POSTDISPLAY
-        _zsh_autosuggest_invoke_original_widget "accept-line"
+        zle .accept-line
     else
         print -n '\033[2J\033[3J\033[H' # hide cursor and clear screen
         if [[ "${LASTWIDGET}" == "_yeah" ]]; then
