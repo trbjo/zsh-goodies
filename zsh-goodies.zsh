@@ -43,14 +43,14 @@ nvm() {
 
 if command -v curlie > /dev/null 2>&1; then
     curlie() {
-         local -a myargs
-         for string in $@; do
-              if [[ $string == http* ]]; then
-                   string=${string:gs/ /\%20}
-              fi
-              myargs+=$string
-         done
-         /usr/bin/curlie $myargs
+        local -a myargs
+        for string in $@; do
+            if [[ $string == http* ]]; then
+                string=${string:gs/ /\%20}
+            fi
+            myargs+=$string
+        done
+        /usr/bin/curlie $myargs
     }
 fi
 
@@ -76,13 +76,13 @@ gcl() {
 }
 
 _psql() {
-     if [[ ${1:0:1} == "d" ]]; then
-          myQuery="\\$@"
-     else
-          myQuery="$@"
-     fi
-     [[ -z ${PSQL_DB} ]] && print "PSQL_DB is unset" && return 1
-     psql -U ${PSQL_USER:-postgres} -d ${PSQL_DB} <<< "$myQuery"
+    if [[ ${1:0:1} == "d" ]]; then
+        myQuery="\\$@"
+    else
+        myQuery="$@"
+    fi
+    [[ -z ${PSQL_DB} ]] && print "PSQL_DB is unset" && return 1
+    psql -U ${PSQL_USER:-postgres} -d ${PSQL_DB} <<< "$myQuery"
 }
 alias p='noglob _psql'
 
