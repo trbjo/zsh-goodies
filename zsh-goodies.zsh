@@ -401,20 +401,14 @@ groot() {
     gittest=$(git rev-parse --show-toplevel) > /dev/null 2>&1 && cd $gittest || print "Not in a git dir"
 }
 
-if command -v exa > /dev/null 2>&1; then
-    _file_lister='exa'
-else
-    _file_lister='ls'
-fi
-
-function _yeah() {
+function _autosuggest_execute_or_clear_screen_or_ls() {
     if [[ $BUFFER ]]; then
         BUFFER+="${POSTDISPLAY}"
         unset POSTDISPLAY
         zle .accept-line
     else
         print -n '\033[2J\033[3J\033[H' # hide cursor and clear screen
-        if [[ "${LASTWIDGET}" == "_yeah" ]]; then
+        if [[ "${LASTWIDGET}" == "_autosuggest_execute_or_clear_screen_or_ls" ]]; then
             redefine
         else
             redefine::reset
@@ -424,13 +418,13 @@ function _yeah() {
         zle reset-prompt
     fi
 }
-zle -N _yeah
-bindkey -e '\e' _yeah
+zle -N _autosuggest_execute_or_clear_screen_or_ls
+bindkey -e '\e' _autosuggest_execute_or_clear_screen_or_ls
 
 redefine::reset() {
     redefine::reset() {
         redefine() {
-            $_file_lister --color=auto --group-directories-first
+            exa --color=auto --group-directories-first 2> /dev/null || ls --color=auto --group-directories-first
             redefine() {
                 redefine::reset
             }
