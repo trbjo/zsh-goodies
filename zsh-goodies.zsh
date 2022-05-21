@@ -367,6 +367,7 @@ remember() {
         mycursor=$CURSOR
         stored=$BUFFER
         zle kill-buffer
+        zle reset-prompt
     fi
 }
 zle -N remember
@@ -422,6 +423,7 @@ function _yeah() {
             redefine::reset
         fi
         preprompt
+        print -Pn ${PROMPT_WS_SEP}
         zle reset-prompt
     fi
 }
@@ -431,7 +433,7 @@ bindkey -e '\e' _yeah
 redefine::reset() {
     redefine::reset() {
         redefine() {
-            $_file_lister --color=auto --group-directories-first && print
+            $_file_lister --color=auto --group-directories-first
             redefine() {
                 redefine::reset
             }
