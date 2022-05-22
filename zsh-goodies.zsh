@@ -154,115 +154,89 @@ zle -N gentle_hl
 
 find_char_forward() {
     [[ -z "$RBUFFER" ]] && return
-    local key
-    if [[ -n $1 ]]; then
-        key=$1
-    else
-        read -k 1 key
-    fi
-    typeset -aU positions
-    for (( i = 1; i <= $#RBUFFER; i++ )); do
-        if [[ "${RBUFFER[i]}" == "$key" ]]; then
-            positions+=($i )
-        fi
-    done
-    local pos abs_pos
-    for pos in ${positions}; do
-        abs_pos=$(( $pos + $CURSOR ))
-        region_highlight+=("P$(( $abs_pos -1 )) $abs_pos bold,fg=cyan")
-    done
-    CURSOR+=${positions[1]}
-    zle gentle_hl
-
-    while true; do
-        read -k 1 var
-        if [[ "$var" == $'\r' ]]; then
-            for (( j = 1; j <= $#RBUFFER; j++ )); do
-                if [[ "${RBUFFER[j]}" == "$key" ]]; then
-                    CURSOR+=$j
-                    zle gentle_hl
-                    continue 2
-                fi
-            done
-            CURSOR=${#BUFFER}
-            for elem in ${positions}; do
-                region_highlight[-1]=()
-            done
-            zle end-of-line -w
-            return
-        elif [[ "$var" == $'\022' ]]; then
-            find_char_backward "$key"
-            for elem in ${positions}; do
-                region_highlight[-1]=()
-            done
-            return
-        else
-            for elem in ${positions}; do
-                region_highlight[-1]=()
-            done
-            zle -U "$var"
-            return
-        fi
-    done
+    find_char 1
 }
-zle -N find_char_forward
-bindkey -e "^T" find_char_forward
 
 find_char_backward() {
     [[ -z "$LBUFFER" ]] && return
-    local key
-    if [[ -n $1 ]]; then
-        key=$1
-    else
-        read -k 1 key
-    fi
-    typeset -aU positions
+    find_char 0
+}
 
+find_char() {
+    local char
+    read -k 1 char
+    typeset -a lpositions rpositions
     for (( i = 1; i <= $#LBUFFER; i++ )); do
-        if [[ "${LBUFFER[$#LBUFFER-i]}" == "$key" ]]; then
-            positions+=($i )
+        if [[ "${LBUFFER[i]}" == "$char" ]]; then
+            lpositions+=($i )
         fi
     done
-    local pos abs_pos
-    for pos in ${positions}; do
-        abs_pos=$(( $CURSOR - $pos ))
-        region_highlight+=("P$(( $abs_pos -1 )) $abs_pos bold,fg=cyan")
+
+    for (( i = 1; i <= $#RBUFFER; i++ )); do
+        if [[ "${RBUFFER[i]}" == "$char" ]]; then
+            rpositions+=( $(($i + $CURSOR)) )
+        fi
     done
-    CURSOR=$(( $CURSOR - ${positions[1]} ))
+
+    typeset -a positions=(${lpositions[@]} ${rpositions[@]})
+    if [[ ${#positions} -eq 0 ]]; then
+        return
+    fi
+
+    typeset -i idx
+    if [[ $1 == 1 ]]; then
+        CURSOR=${rpositions[1]}
+        idx=$(( ${#lpositions} + 1 ))
+    else
+        CURSOR=${lpositions[-1]}
+        idx=$(( ${#lpositions} ))
+    fi
+
+    local pos
+    for pos in ${positions}; do
+        region_highlight+=("P$(( $pos -1 )) $pos bold,fg=cyan")
+    done
     zle gentle_hl
 
+    local key
     while true; do
-        read -k 1 var
-        if [[ "$var" == $'\022' ]]; then
-            for (( j = 1; j <= $#LBUFFER; j++ )); do
-                if [[ "${LBUFFER[$#LBUFFER-j]}" == "$key" ]]; then
-                    CURSOR=$(( $CURSOR - $j ))
-                    zle gentle_hl
-                    continue 2
+        read -k 1 key
+        case $key in
+            $'\r') # forward
+                idx+=1
+                if (( $idx > ${#positions} )); then
+                    CURSOR=${#BUFFER}
+                    zle end-of-line
+                    break
                 fi
-            done
-            CURSOR=0
-            for elem in ${positions}; do
-                region_highlight[-1]=()
-            done
-            zle beginning-of-line -w
-            return
-        elif [[ "$var" == $'\r' ]]; then
-            find_char_forward "$key"
-            for elem in ${positions}; do
-                region_highlight[-1]=()
-            done
-            return
-
-        else
-            for elem in ${positions}; do
-                region_highlight[-1]=()
-            done
-            zle -U "$var"
-            return
-        fi
+                CURSOR=${positions[$idx]}
+                zle gentle_hl
+                ;;
+            $'\022') # backward
+                idx=$(( $idx -1 ))
+                if (( $idx == 0 )); then
+                    CURSOR=0
+                    zle beginning-of-line
+                    break
+                fi
+                CURSOR=${positions[$idx]}
+                zle gentle_hl
+                ;;
+            *) # any other key
+                local __fc_feedkey=true
+                break
+                ;;
+        esac
     done
+
+    for (( i = 1; i <= $(( $#positions )); i++ )); do
+        region_highlight[-1]=()
+    done
+    [[ -n $__fc_feedkey ]] && zle -U "$key"
 }
+
+zle -N find_char_forward
+bindkey -e "^T" find_char_forward
 zle -N find_char_backward
 bindkey -e "^B" find_char_backward
 
@@ -468,7 +442,6 @@ function _accept_autosuggestion() {
 }
 zle -N _accept_autosuggestion
 bindkey '^N' _accept_autosuggestion
-return
 
 function _autosuggest_execute_or_clear_screen_or_ls() {
     if [[ $BUFFER ]]; then
