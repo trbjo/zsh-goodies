@@ -165,7 +165,9 @@ find_char_backward() {
 find_char() {
     local char
     read -k 1 char
+
     typeset -a lpositions rpositions
+
     for (( i = 1; i <= $#LBUFFER; i++ )); do
         if [[ "${LBUFFER[i]}" == "$char" ]]; then
             lpositions+=($i )
@@ -199,40 +201,28 @@ find_char() {
     zle gentle_hl
 
     local key
-    while true; do
-        read -k 1 key
+    while read -k 1 key; do
         case $key in
             $'\r') # forward
                 idx+=1
-                if (( $idx > ${#positions} )); then
-                    CURSOR=${#BUFFER}
-                    zle end-of-line
-                    break
-                fi
-                CURSOR=${positions[$idx]}
-                zle gentle_hl
+                (( $idx > ${#positions} )) && break
                 ;;
             $'\022') # backward
                 idx=$(( $idx -1 ))
-                if (( $idx == 0 )); then
-                    CURSOR=0
-                    zle beginning-of-line
-                    break
-                fi
-                CURSOR=${positions[$idx]}
-                zle gentle_hl
+                (( $idx == 0 )) && break
                 ;;
             *) # any other key
-                local __fc_feedkey=true
+                zle -U "$key"
                 break
                 ;;
         esac
+        CURSOR=${positions[$idx]}
+        zle gentle_hl
     done
 
     for (( i = 1; i <= $(( $#positions )); i++ )); do
         region_highlight[-1]=()
     done
-    [[ -n $__fc_feedkey ]] && zle -U "$key"
 }
 
 zle -N find_char_forward
