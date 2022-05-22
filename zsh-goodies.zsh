@@ -154,13 +154,14 @@ zle -N gentle_hl
 
 find_char_forward() {
     [[ -z "$RBUFFER" ]] && return
+    local key
     if [[ -n $1 ]]; then
-        local key=$1
+        key=$1
     else
         read -k 1 key
     fi
-    typeset -a positions
-    for (( i = 1; i < $#RBUFFER; i++ )); do
+    typeset -aU positions
+    for (( i = 1; i <= $#RBUFFER; i++ )); do
         if [[ "${RBUFFER[i]}" == "$key" ]]; then
             positions+=($i )
         fi
@@ -176,7 +177,7 @@ find_char_forward() {
     while true; do
         read -k 1 var
         if [[ "$var" == $'\r' ]]; then
-            for (( j = 1; j < $#RBUFFER; j++ )); do
+            for (( j = 1; j <= $#RBUFFER; j++ )); do
                 if [[ "${RBUFFER[j]}" == "$key" ]]; then
                     CURSOR+=$j
                     zle gentle_hl
@@ -189,8 +190,12 @@ find_char_forward() {
             done
             zle end-of-line -w
             return
-        elif [[ "$var" == $'\023' ]]; then
+        elif [[ "$var" == $'\022' ]]; then
             find_char_backward "$key"
+            for elem in ${positions}; do
+                region_highlight[-1]=()
+            done
+            return
         else
             for elem in ${positions}; do
                 region_highlight[-1]=()
@@ -205,13 +210,15 @@ bindkey -e "^T" find_char_forward
 
 find_char_backward() {
     [[ -z "$LBUFFER" ]] && return
+    local key
     if [[ -n $1 ]]; then
-        local key=$1
+        key=$1
     else
         read -k 1 key
     fi
-    typeset -a positions
-    for (( i = 1; i < $#LBUFFER; i++ )); do
+    typeset -aU positions
+
+    for (( i = 1; i <= $#LBUFFER; i++ )); do
         if [[ "${LBUFFER[$#LBUFFER-i]}" == "$key" ]]; then
             positions+=($i )
         fi
@@ -226,8 +233,8 @@ find_char_backward() {
 
     while true; do
         read -k 1 var
-        if [[ "$var" == $'\023' ]]; then
-            for (( j = 1; j < $#LBUFFER; j++ )); do
+        if [[ "$var" == $'\022' ]]; then
+            for (( j = 1; j <= $#LBUFFER; j++ )); do
                 if [[ "${LBUFFER[$#LBUFFER-j]}" == "$key" ]]; then
                     CURSOR=$(( $CURSOR - $j ))
                     zle gentle_hl
@@ -242,6 +249,11 @@ find_char_backward() {
             return
         elif [[ "$var" == $'\r' ]]; then
             find_char_forward "$key"
+            for elem in ${positions}; do
+                region_highlight[-1]=()
+            done
+            return
+
         else
             for elem in ${positions}; do
                 region_highlight[-1]=()
