@@ -180,19 +180,18 @@ find_char() {
         fi
     done
 
-    typeset -a positions=(${lpositions[@]} ${rpositions[@]})
-    if [[ ${#positions} -eq 0 ]]; then
-        return
-    fi
-
     typeset -i idx
     if [[ $1 == 1 ]]; then
+        (( ${#rpositions} > 0 )) || return 0
         CURSOR=${rpositions[1]}
         idx=$(( ${#lpositions} + 1 ))
     else
+        (( ${#lpositions} > 0 )) || return 0
         CURSOR=${lpositions[-1]}
         idx=$(( ${#lpositions} ))
     fi
+
+    typeset -a positions=(${lpositions[@]} ${rpositions[@]})
 
     local pos
     for pos in ${positions}; do
