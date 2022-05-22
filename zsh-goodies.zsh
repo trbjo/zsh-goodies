@@ -460,6 +460,16 @@ groot() {
     gittest=$(git rev-parse --show-toplevel) > /dev/null 2>&1 && cd $gittest || print "Not in a git dir"
 }
 
+function _accept_autosuggestion() {
+    BUFFER+="${POSTDISPLAY}"
+    unset POSTDISPLAY
+    _zsh_highlight
+    return
+}
+zle -N _accept_autosuggestion
+bindkey '^N' _accept_autosuggestion
+return
+
 function _autosuggest_execute_or_clear_screen_or_ls() {
     if [[ $BUFFER ]]; then
         BUFFER+="${POSTDISPLAY}"
