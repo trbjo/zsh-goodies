@@ -162,26 +162,25 @@ find_char_backward() {
     find_char 0
 }
 
-find_char() {
+find_char () {
     local char
     read -k 1 char
-
     typeset -a lpositions rpositions
-
-    for (( i = 1; i <= $#LBUFFER; i++ )); do
-        if [[ "${LBUFFER[i]}" == "$char" ]]; then
-            lpositions+=($i )
+    for ((i = 1; i <= $#LBUFFER; i++ )) do
+        if [[ "${LBUFFER[i]}" == "$char" ]]
+        then
+            lpositions+=($i)
         fi
     done
-
-    for (( i = 1; i <= $#RBUFFER; i++ )); do
-        if [[ "${RBUFFER[i]}" == "$char" ]]; then
-            rpositions+=( $(($i + $CURSOR)) )
+    for ((i = 1; i <= $#RBUFFER; i++ )) do
+        if [[ "${RBUFFER[i]}" == "$char" ]]
+        then
+            rpositions+=($(($i + $CURSOR)))
         fi
     done
-
     typeset -i idx
-    if [[ $1 == 1 ]]; then
+    if [[ $1 == 1 ]]
+    then
         (( ${#rpositions} > 0 )) || return 0
         CURSOR=${rpositions[1]}
         idx=$(( ${#lpositions} + 1 ))
@@ -190,36 +189,28 @@ find_char() {
         CURSOR=${lpositions[-1]}
         idx=$(( ${#lpositions} ))
     fi
-
     typeset -a positions=(${lpositions[@]} ${rpositions[@]})
-
     local pos
-    for pos in ${positions}; do
+    for pos in ${positions}
+    do
         region_highlight+=("P$(( $pos -1 )) $pos bold,fg=cyan")
     done
     zle gentle_hl
-
     local key
-    while read -k 1 key; do
+    while read -k 1 key
+    do
         case $key in
-            $'\r') # forward
-                idx+=1
-                (( $idx > ${#positions} )) && break
-                ;;
-            $'\022') # backward
-                idx=$(( $idx -1 ))
-                (( $idx == 0 )) && break
-                ;;
-            *) # any other key
-                zle -U "$key"
-                break
-                ;;
+            ($'\r') idx+=1
+                (( $idx > ${#positions} )) && break ;;
+            ($'\022') idx=$(( $idx -1 ))
+                (( $idx == 0 )) && break ;;
+            (*) zle -U "$key"
+                break ;;
         esac
         CURSOR=${positions[$idx]}
         zle gentle_hl
     done
-
-    for (( i = 1; i <= $(( $#positions )); i++ )); do
+    for ((i = 1; i <= $(( $#positions )); i++ )) do
         region_highlight[-1]=()
     done
 }
