@@ -414,14 +414,46 @@ groot() {
     gittest=$(git rev-parse --show-toplevel) > /dev/null 2>&1 && cd $gittest || print "Not in a git dir"
 }
 
-function _accept_autosuggestion() {
-    BUFFER+="${POSTDISPLAY}"
-    unset POSTDISPLAY
-    _zsh_highlight
-    return
+function _accept_autosuggestion_or_mark_word() {
+    if [[ -n "${POSTDISPLAY}" ]]; then
+        BUFFER+="${POSTDISPLAY}"
+        unset POSTDISPLAY
+        _zsh_highlight
+        return
+    else
+        if [[ $LASTWIDGET == "_accept_autosuggestion_or_mark_word" ]]; then
+            zle set-mark-command -n -1
+            return
+        fi
+
+        if (( ${REGION_ACTIVE} )); then
+            zle set-mark-command -n -1
+        fi
+
+        typeset -i lpos rpos
+        for ((i = $#LBUFFER; i >= 1; i-- )) do
+            if [[ "${LBUFFER[i]}" =~ $'\t|\n| ' ]]
+            then
+                lpos=$i
+                break
+            fi
+        done
+        for ((j = 1; j <= $#RBUFFER; j++ )) do
+            if [[ "${RBUFFER[j]}" =~ $'\t|\n| ' ]]
+            then
+                rpos=$(($j + $CURSOR -1 ))
+                break
+            fi
+            rpos=$#BUFFER
+        done
+        zle set-mark-command
+        MARK=$lpos
+        CURSOR=$rpos
+        zle redisplay
+    fi
 }
-zle -N _accept_autosuggestion
-bindkey '^N' _accept_autosuggestion
+zle -N _accept_autosuggestion_or_mark_word
+bindkey '^N' _accept_autosuggestion_or_mark_word
 
 function _autosuggest_execute_or_clear_screen_or_ls() {
     if [[ $BUFFER ]]; then
