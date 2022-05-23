@@ -430,7 +430,7 @@ function _accept_autosuggestion_or_mark_word() {
             zle set-mark-command -n -1
         fi
 
-        typeset -i lpos rpos
+        typeset -i lpos rpos=$#BUFFER
         for ((i = $#LBUFFER; i >= 1; i-- )) do
             if [[ "${LBUFFER[i]}" =~ $'\t|\n| ' ]]
             then
@@ -444,7 +444,6 @@ function _accept_autosuggestion_or_mark_word() {
                 rpos=$(($j + $CURSOR -1 ))
                 break
             fi
-            rpos=$#BUFFER
         done
         zle set-mark-command
         MARK=$lpos
