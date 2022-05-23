@@ -175,22 +175,18 @@ find_char_backward() {
 find_char () {
     local char
     read -k 1 char
+
     typeset -a lpositions rpositions
     for ((i = 1; i <= $#LBUFFER; i++ )) do
-        if [[ "${LBUFFER[i]}" == "$char" ]]
-        then
-            lpositions+=($i)
-        fi
+        [[ "${LBUFFER[i]}" == "$char" ]] && lpositions+=($i)
     done
+
     for ((i = 1; i <= $#RBUFFER; i++ )) do
-        if [[ "${RBUFFER[i]}" == "$char" ]]
-        then
-            rpositions+=($(($i + $CURSOR)))
-        fi
+        [[ "${RBUFFER[i]}" == "$char" ]] && rpositions+=($(($i + $CURSOR)))
     done
+
     typeset -i idx
-    if [[ $1 == 1 ]]
-    then
+    if [[ $1 == 1 ]]; then
         (( ${#rpositions} > 0 )) || return 0
         CURSOR=${rpositions[1]}
         idx=$(( ${#lpositions} + 1 ))
@@ -199,12 +195,15 @@ find_char () {
         CURSOR=${lpositions[-1]}
         idx=$(( ${#lpositions} ))
     fi
+
     typeset -a positions=(${lpositions[@]} ${rpositions[@]})
+
     local pos
     for pos in ${positions}
     do
         region_highlight+=("P$(( $pos -1 )) $pos bold,fg=cyan")
     done
+
     zle gentle_hl
     local key
     while read -k 1 key
@@ -220,6 +219,7 @@ find_char () {
         CURSOR=${positions[$idx]}
         zle gentle_hl
     done
+
     for ((i = 1; i <= $(( $#positions )); i++ )) do
         region_highlight[-1]=()
     done
