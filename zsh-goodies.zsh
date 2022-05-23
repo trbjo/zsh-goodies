@@ -155,7 +155,12 @@ gentle_hl() {
 }
 zle -N gentle_hl
 
-find_char_forward() {
+_find_char_forward() {
+    if [[ -n "${POSTDISPLAY}" ]]; then
+        BUFFER+="${POSTDISPLAY}"
+        unset POSTDISPLAY
+        zle redisplay
+    fi
     [[ -z "$RBUFFER" ]] && return
     find_char 1
 }
@@ -218,8 +223,8 @@ find_char () {
     done
 }
 
-zle -N find_char_forward
-bindkey -e "^T" find_char_forward
+zle -N _find_char_forward
+bindkey -e "^T" _find_char_forward
 zle -N find_char_backward
 bindkey -e "^B" find_char_backward
 
