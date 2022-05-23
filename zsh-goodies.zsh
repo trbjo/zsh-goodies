@@ -4,25 +4,28 @@ mkcd() {
 }
 
 up() {
-  local op=print
-  [[ -t 1 ]] && op=cd
-  case "$1" in
-    '') up 1;;
-    -*|+*) $op ~$1;;
-    <->) $op $(printf '../%.0s' {1..$1});;
-    @) local cdup; cdup=$(git rev-parse --show-cdup) && $op $cdup;;
-    *) local -a seg; seg=(${(s:/:)PWD%/*})
-       local n=${(j:/:)seg[1,(I)$1*]}
-       if [[ -n $n ]]; then
-         $op /$n
-       else
-         print -u2 up: could not find prefix $1 in $PWD
-         return 1
-       fi
-  esac
+    local op=print
+    [[ -t 1 ]] && op=cd
+    case "$1" in
+        ('') up 1;;
+        (-*|+*) $op ~$1;;
+        (<->) $op $(printf '../%.0s' {1..$1});;
+        (@) local cdup; cdup=$(git rev-parse --show-cdup) && $op $cdup;;
+        (*) local -a seg; seg=(${(s:/:)PWD%/*})
+        local n=${(j:/:)seg[1,(I)$1*]}
+        if [[ -n $n ]]; then
+            $op /$n
+        else
+            print -u2 up: could not find prefix $1 in $PWD
+            return 1
+        fi
+    esac
 }
 
-_up() { compadd -V segments -- ${(Oas:/:)${PWD%/*}} }
+_up() {
+    (( $#words > 2 )) && return
+    compadd -V segments -- ${(Oas:/:)${PWD%/*}}
+}
 compdef _up up
 
 # nvm takes too long to source, we only source it if we need to
@@ -202,7 +205,7 @@ find_char () {
         case $key in
             ($'\r') idx+=1
                 (( $idx > ${#positions} )) && break ;;
-            ($'\022') idx=$(( $idx -1 ))
+            ($'\022') idx+=-1
                 (( $idx == 0 )) && break ;;
             (*) zle -U "$key"
                 break ;;
@@ -370,13 +373,11 @@ aliases[c]='noglob __calc_plugin'
 # Store the current input, and restore it with a second ^q
 # also store the cursor pos
 remember() {
-    # Nothing in buffer: get previous command.
-    if [[ $#BUFFER -eq 0 ]]; then
+    if [[ $#BUFFER -eq 0 ]]; then # Nothing in buffer: get previous command.
         BUFFER="${stored}"
         CURSOR=$mycursor
         _zsh_highlight
-    # Store current input.
-    else
+    else # Store current input.
         mycursor=$CURSOR
         stored=$BUFFER
         zle kill-buffer
