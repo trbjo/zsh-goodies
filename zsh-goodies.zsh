@@ -232,7 +232,7 @@ expand-selection() {
 
     (( $#BUFFER == 0 )) && return
 
-    if (($REGION_ACTIVE)) && [[ ${BUFFER[$(($CURSOR+1))]} == $__corresponding_chars[${BUFFER[$MARK]}] ]] && (( $#RBUFFER > 0 )); then
+    if (($REGION_ACTIVE)) && [[ ${BUFFER[$(($CURSOR+1))]} == $__corresponding_chars[${BUFFER[$MARK]}] ]] && (( $#RBUFFER > 0 )) && [[ ${BUFFER[$MARK]} == $__corresponding_chars[${BUFFER[$(($CURSOR+1))]}] ]] && (( $#LBUFFER > 0 )); then
         MARK+=-1
         CURSOR+=1
         zle redisplay
