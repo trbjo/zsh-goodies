@@ -283,7 +283,7 @@ expand-selection() {
     zle reset-prompt
 }
 zle -N expand-selection
-bindkey -e "^s" expand-selection
+bindkey -e "^Y" expand-selection
 
 undo() {
     if ((REGION_ACTIVE)); then
