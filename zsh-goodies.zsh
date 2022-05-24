@@ -151,12 +151,6 @@ zle -N insert_doas
 bindkey -e "!" insert_doas
 
 
-gentle_hl() {
-    zle .forward-char
-    zle .backward-char
-}
-zle -N gentle_hl
-
 _find_char_forward() {
     if [[ -n "${POSTDISPLAY}" ]]; then
         BUFFER+="${POSTDISPLAY}"
@@ -204,7 +198,7 @@ find_char () {
         region_highlight+=("P$(( $pos -1 )) $pos bold,fg=cyan")
     done
 
-    zle gentle_hl
+    zle redisplay
     local key
     while read -k 1 key
     do
@@ -217,7 +211,7 @@ find_char () {
                 break ;;
         esac
         CURSOR=${positions[$idx]}
-        zle gentle_hl
+        zle redisplay
     done
 
     for ((i = 1; i <= $(( $#positions )); i++ )) do
@@ -230,74 +224,73 @@ bindkey -e "^T" _find_char_forward
 zle -N find_char_backward
 bindkey -e "^B" find_char_backward
 
+
+typeset -ga __opener=("(" "{" "[" )
+typeset -ga __closer=(")" "}" "]" )
+typeset -gA __corresponding_chars=("(" ")" ")" "(" "{" "}" "}" "{" "[" "]" "]" "[" "'" "'" '"' '"' )
 expand-selection() {
-    local quotematch
-    local BEGIN=${#LBUFFER}
-    local END=0
 
-    # if we have an active selection, we assume it was expanded with
-    # this method and we ignore it by offsetting the indexes by 1
-    if ((REGION_ACTIVE)); then
+    (( $#BUFFER == 0 )) && return
 
-        # we store the current selection for the undo widget:
-        UNDO_BEGIN_REGION=$MARK
-        UNDO_END_REGION=$CURSOR
-
-        let BEGIN=$(( ${#LBUFFER} - $CURSOR + $MARK -1))
-        let END+=1
-        # we check if we should expand for ' or "
-        if [[ "${BUFFER[MARK]}" == '"' ]]; then
-            quotematch=^\'$
-        else
-            quotematch=^\"$
-        fi
-    else
-        # no selection, we expand for either
-        quotematch=^\'\|\"$
+    if (($REGION_ACTIVE)) && [[ ${BUFFER[$(($CURSOR+1))]} == $__corresponding_chars[${BUFFER[$MARK]}] ]]; then
+        local newmark=$(($MARK -1 ))
+        local newcursor=$(($CURSOR + 1 ))
+        CURSOR=$newmark
+        zle set-mark-command
+        CURSOR=$newcursor
+        zle redisplay
+        return
     fi
 
-    # traverse LBUFFER backwards to find beginning of quotes
-    while ! [[ $LBUFFER[BEGIN] =~ $quotematch ]]; do
-        if [[ $BEGIN == 1 ]]; then
-            return 0
+    typeset -i left_closer right_opener
+    local rbuffer_length=$#RBUFFER
+    local lbuffer_length=$#LBUFFER
+    local lchar rchar
+    (( rbuffer_length > lbuffer_length )) && local longest=$rbuffer_length || local longest=$lbuffer_length
+
+    for (( i = 1; i <= longest; i++ )); do
+
+        if (( $rbuffer_length > 0 )) && [[ -z $rpos ]]; then
+            rchar=${RBUFFER[i]}
+            rbuffer_length+=-1
+            if (( $__opener[(Ie)$rchar] > 0 )); then
+                right_opener+=1
+            elif (( $__closer[(Ie)$rchar] > 0 )) || [[ $rchar == '"' ]] || [[ $rchar == "'" ]]; then
+                if (( right_opener > 0 )); then
+                    right_opener+=-1
+                else
+                    local rpos=$(( i + CURSOR - 1 ))
+                    [[ -n $has_opposite ]] && break || local has_opposite=true
+                fi
+            fi
         fi
-        let BEGIN=$BEGIN-1
-    done
 
-    # we now know what matched, so we only check for the char
-    # of the left match ignoring the regex,
-    quotematch="${LBUFFER[BEGIN]}"
-
-    # traverse forwards
-    while [[ $RBUFFER[END] != $quotematch ]]; do
-        if [[ $END == ${#RBUFFER} ]]; then
-            return 0
+        if (( $lbuffer_length > 0 )) && [[ -z $lpos ]]; then
+            lchar=${LBUFFER[$CURSOR - i + 1]}
+            lbuffer_length+=-1
+            if (( $__closer[(Ie)$lchar] > 0 )); then
+                left_closer+=1
+            elif (( $__opener[(Ie)$lchar] > 0 )) || [[ $lchar == '"' ]] || [[ $lchar == "'" ]]; then
+                if (( left_closer > 0 )); then
+                    left_closer+=-1
+                else
+                    local lpos=$(( CURSOR - i + 1 ))
+                    [[ -n $has_opposite ]] && break || local has_opposite=true
+                fi
+            fi
         fi
-        let END=$END+1
     done
-
-    LENGTHOFLSTRING=$(( ${#LBUFFER} - $BEGIN ))
-    CURSOR=$BEGIN
+    [[ -z $lpos ]] && typeset -i lpos
+    [[ -z $rpos ]] && typeset -i rpos=$#BUFFER
     zle set-mark-command
-    CURSOR+=$(( $LENGTHOFLSTRING + $END - 1))
-    zle reset-prompt
+    MARK=$lpos
+    CURSOR=$rpos
+    zle redisplay
+    return 0
+
 }
 zle -N expand-selection
 bindkey -e "^Y" expand-selection
-
-undo() {
-    if ((REGION_ACTIVE)); then
-        zle set-mark-command -n -1
-        zle set-mark-command
-        MARK=$UNDO_BEGIN_REGION
-        CURSOR=$UNDO_END_REGION
-    else
-        zle .undo
-    fi
-}
-zle -N undo
-bindkey -e "^_" undo
-
 
 insert-bracket() {
     local leftmark='['
@@ -398,6 +391,7 @@ bindkey '^Q' remember
 # if the char to the right of the cursor is a 'closer', tab moves one char to the right
 # Otherwise workes as normal
 typeset -ga __closers=("\"" "'" "]" ")" "}")
+typeset -ga __openers=("\"" "'" "[" "(" "{")
 repeat-last-command-or-complete-entry() {
     if [[ -z "$BUFFER" ]]; then
         zle up-history
@@ -418,54 +412,53 @@ zle -N repeat-last-command-or-complete-entry
 bindkey '\t' repeat-last-command-or-complete-entry
 (( ${+ZSH_AUTOSUGGEST_CLEAR_WIDGETS} )) && ZSH_AUTOSUGGEST_CLEAR_WIDGETS+=(repeat-last-command-or-complete-entry)
 
-groot() {
+gr() {
     gittest=$(git rev-parse --show-toplevel) > /dev/null 2>&1 && cd $gittest || print "Not in a git dir"
 }
 
 function _accept_autosuggestion_or_mark_word() {
+
     if [[ -n "${POSTDISPLAY}" ]]; then
         BUFFER+="${POSTDISPLAY}"
         unset POSTDISPLAY
         _zsh_highlight
         return
-    else
-        if [[ $LASTWIDGET == "_accept_autosuggestion_or_mark_word" ]]; then
-            zle set-mark-command -n -1
-            return
-        fi
-
-        if (( ${REGION_ACTIVE} )); then
-            zle set-mark-command -n -1
-        fi
-
-        typeset -i lpos rpos=$#BUFFER
-        for ((i = $#LBUFFER; i >= 1; i-- )) do
-            if [[ "${LBUFFER[i]}" =~ $'\t|\n| ' ]]
-            then
-                lpos=$i
-                break
-            fi
-        done
-        for ((j = 1; j <= $#RBUFFER; j++ )) do
-            if [[ "${RBUFFER[j]}" =~ $'\t|\n| ' ]]
-            then
-                rpos=$(($j + $CURSOR -1 ))
-                break
-            fi
-        done
-        zle set-mark-command
-        MARK=$lpos
-        CURSOR=$rpos
-        zle redisplay
     fi
+
+    if (($REGION_ACTIVE)); then
+        zle set-mark-command -n -1
+        return
+    fi
+
+    typeset -i lpos rpos=$#BUFFER
+    for ((i = $#LBUFFER; i >= 1; i-- )) do
+        if [[ "${LBUFFER[i]}" =~ $'\t|\n| ' ]]
+        then
+            lpos=$i
+            break
+        fi
+    done
+    for ((j = 1; j <= $#RBUFFER; j++ )) do
+        if [[ "${RBUFFER[j]}" =~ $'\t|\n| ' ]]
+        then
+            rpos=$(($j + $CURSOR -1 ))
+            break
+        fi
+    done
+    zle set-mark-command
+    MARK=$lpos
+    CURSOR=$rpos
+    zle redisplay
 }
 zle -N _accept_autosuggestion_or_mark_word
 bindkey '^N' _accept_autosuggestion_or_mark_word
 
 function _autosuggest_execute_or_clear_screen_or_ls() {
     if [[ $BUFFER ]]; then
-        BUFFER+="${POSTDISPLAY}"
-        unset POSTDISPLAY
+        if [[ $POSTDISPLAY ]]; then
+            BUFFER+="${POSTDISPLAY}"
+            unset POSTDISPLAY
+        fi
         zle .accept-line
     else
         print -n '\033[2J\033[3J\033[H' # hide cursor and clear screen
