@@ -232,12 +232,9 @@ expand-selection() {
 
     (( $#BUFFER == 0 )) && return
 
-    if (($REGION_ACTIVE)) && [[ ${BUFFER[$(($CURSOR+1))]} == $__corresponding_chars[${BUFFER[$MARK]}] ]]; then
-        local newmark=$(($MARK -1 ))
-        local newcursor=$(($CURSOR + 1 ))
-        CURSOR=$newmark
-        zle set-mark-command
-        CURSOR=$newcursor
+    if (($REGION_ACTIVE)) && [[ ${BUFFER[$(($CURSOR+1))]} == $__corresponding_chars[${BUFFER[$MARK]}] ]] && (( $#RBUFFER > 0 )); then
+        MARK+=-1
+        CURSOR+=1
         zle redisplay
         return
     fi
@@ -260,7 +257,7 @@ expand-selection() {
                     right_opener+=-1
                 else
                     local rpos=$(( i + CURSOR - 1 ))
-                    [[ -n $has_opposite ]] && break || local has_opposite=true
+                    [[ -n $lpos ]] && break
                 fi
             fi
         fi
@@ -275,7 +272,7 @@ expand-selection() {
                     left_closer+=-1
                 else
                     local lpos=$(( CURSOR - i + 1 ))
-                    [[ -n $has_opposite ]] && break || local has_opposite=true
+                    [[ -n $rpos ]] && break
                 fi
             fi
         fi
