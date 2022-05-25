@@ -277,8 +277,7 @@ expand-selection() {
             fi
         fi
     done
-    [[ -z $lpos ]] && typeset -i lpos
-    [[ -z $rpos ]] && typeset -i rpos=$#BUFFER
+    [[ -n $lpos ]] && [[ -n $rpos ]] || return
     zle set-mark-command
     MARK=$lpos
     CURSOR=$rpos
@@ -402,7 +401,6 @@ repeat-last-command-or-complete-entry() {
         return
     fi
 
-    [[ ! -z $pending_git_status_pid ]] && kill $pending_git_status_pid > /dev/null 2>&1 && unset pending_git_status_pid
     zle expand-or-complete
 }
 zle -N repeat-last-command-or-complete-entry
