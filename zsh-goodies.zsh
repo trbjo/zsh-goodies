@@ -225,7 +225,7 @@ zle -N find_char_backward
 bindkey -e "^B" find_char_backward
 
 
-typeset -ga __interesting_chars=("(" "[" "{" ")" "]" "}" "'" '"' )
+typeset -ga __interesting_chars=("(" "{" "[" ")"  "}" "]" "'" '"' )
 typeset -gA __corresponding_chars=("(" ")" ")" "(" "{" "}" "}" "{" "[" "]" "]" "[" "'" "'" '"' '"' )
 
 expand-selection() {
@@ -242,11 +242,11 @@ expand-selection() {
     typeset -a l_array=()
     typeset -a l_array_types=()
 
+    typeset -i pop_this_many
     typeset -i single_quotes
     typeset -i double_quotes
 
     for (( i = 1; i <= $#LBUFFER; i++ )); do
-
         local var=$__interesting_chars[(Ie)${LBUFFER[i]}]
         case $var in
             (<1-3>)
@@ -254,85 +254,104 @@ expand-selection() {
                 l_array_types+=$var
                 ;;
             (<4-6>)
-                (( ${#l_array} == 0 )) && return
+                (( ${#l_array} == 0 )) && continue
                 if (( ${l_array_types[-1]} == ( $var - 3 ) )); then
                     l_array[-1]=()
                     l_array_types[-1]=()
-                else
-                    print "something wrong left"
                 fi
                 ;;
             (7)
                 if (( single_quotes )); then
-                    l_array[-1]=()
-                    l_array_types[-1]=()
+                    pop_this_many=$(($#l_array - single_quotes + 1))
+                    for (( j = 1; j <= pop_this_many; j++ )); do
+                        l_array_types[-1]=()
+                        l_array[-1]=()
+                    done
+                    single_quotes=0
                 else
                     l_array_types+=$var
                     l_array+=$i
+                    single_quotes=$#l_array
                 fi
-                (( single_quotes ^= 1))
                 ;;
             (8)
                 if (( double_quotes )); then
-                    l_array_types[-1]=()
-                    l_array[-1]=()
+                    pop_this_many=$(($#l_array - double_quotes + 1))
+                    for (( j = 1; j <= pop_this_many; j++ )); do
+                        l_array_types[-1]=()
+                        l_array[-1]=()
+                    done
+                    double_quotes=0
                 else
                     l_array_types+=$var
                     l_array+=$i
+                    double_quotes=$#l_array
                 fi
-                (( double_quotes ^= 1))
                 ;;
             (0) ;;
         esac
     done
+
+    if (( $#l_array == 0 )); then
+        return
+    fi
 
     typeset -a r_array=()
     typeset -a r_array_types=()
 
-    single_quotes=0
-    double_quotes=0
-
-    for (( i = $#RBUFFER; i >= 1; i-- )); do
+    for (( i = 1; i <= $#RBUFFER; i++ )); do
         local var=$__interesting_chars[(Ie)${RBUFFER[i]}]
         case $var in
             (<1-3>)
-                (( ${#r_array} == 0 )) && return
-                if (( ${r_array_types[-1]} == ( $var + 3 ) )); then
-                    r_array[-1]=()
-                    r_array_types[-1]=()
-                else
-                    print unmatched  parenthesis
-                fi
-                ;;
-            (<4-6>)
                 r_array+=$i
                 r_array_types+=$var
                 ;;
-            (7)
-                if (( single_quotes )); then
+            (<4-6>)
+                if (( ${#r_array} == 0 )); then
+                    if (( ${l_array_types[-1]} == ( $var - 3 ) )); then
+                        local rpos=$(( i + $#LBUFFER -1 ))
+                        # print hej
+                        break
+                    fi
+                elif (( ${r_array_types[-1]} == ( $var - 3 ) )); then
                     r_array[-1]=()
                     r_array_types[-1]=()
-                else
-                    r_array_types+=$var
-                    r_array+=$i
+                elif (( ${l_array_types[-1]} == ( $var - 3 ) )); then
+                    local rpos=$(( i + $#LBUFFER -1 ))
+                    break
                 fi
-                (( single_quotes ^= 1))
+                ;;
+            (7)
+                if (( single_quotes )); then
+                    for (( j = ${#l_array_types}; j >= 1; j-- )); do
+                        if (( ${l_array_types[j]} != $var )); then
+                            l_array[-1]=()
+                        else
+                            break
+                        fi
+                    done
+                    local rpos=$(( i + $#LBUFFER -1 ))
+                    break
+                fi
                 ;;
             (8)
                 if (( double_quotes )); then
-                    r_array_types[-1]=()
-                    r_array[-1]=()
-                else
-                    r_array_types+=$var
-                    r_array+=$i
+                    for (( j = ${#l_array_types}; j >= 1; j-- )); do
+                        if (( ${l_array_types[j]} != $var )); then
+                            l_array[-1]=()
+                        else
+                            break
+                        fi
+                    done
+                    local rpos=$(( i + $#LBUFFER -1 ))
+                    break
                 fi
-                (( double_quotes ^= 1))
                 ;;
             (0) ;;
         esac
     done
+
     local lpos=${l_array[-1]}
-    local rpos=$(( ${r_array[-1]} + $#LBUFFER -1 ))
 
     [[ -n $lpos ]] && [[ -n $rpos ]] || return
 
