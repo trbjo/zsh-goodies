@@ -225,9 +225,9 @@ zle -N find_char_backward
 bindkey -e "^B" find_char_backward
 
 
-typeset -ga __opener=("(" "{" "[" )
-typeset -ga __closer=(")" "}" "]" )
+typeset -ga __interesting_chars=("(" "[" "{" ")" "]" "}" "'" '"' )
 typeset -gA __corresponding_chars=("(" ")" ")" "(" "{" "}" "}" "{" "[" "]" "]" "[" "'" "'" '"' '"' )
+
 expand-selection() {
 
     (( $#BUFFER == 0 )) && return
@@ -239,45 +239,103 @@ expand-selection() {
         return
     fi
 
-    typeset -i left_closer right_opener
-    local rbuffer_length=$#RBUFFER
-    local lbuffer_length=$#LBUFFER
-    local lchar rchar
-    (( rbuffer_length > lbuffer_length )) && local longest=$rbuffer_length || local longest=$lbuffer_length
+    typeset -a l_array=()
+    typeset -a l_array_types=()
 
-    for (( i = 1; i <= longest; i++ )); do
+    typeset -i single_quotes
+    typeset -i double_quotes
 
-        if (( $rbuffer_length > 0 )) && [[ -z $rpos ]]; then
-            rchar=${RBUFFER[i]}
-            rbuffer_length+=-1
-            if (( $__opener[(Ie)$rchar] > 0 )); then
-                right_opener+=1
-            elif (( $__closer[(Ie)$rchar] > 0 )) || [[ $rchar == '"' ]] || [[ $rchar == "'" ]]; then
-                if (( right_opener > 0 )); then
-                    right_opener+=-1
+    for (( i = 1; i <= $#LBUFFER; i++ )); do
+
+        local var=$__interesting_chars[(Ie)${LBUFFER[i]}]
+        case $var in
+            (<1-3>)
+                l_array+=$i
+                l_array_types+=$var
+                ;;
+            (<4-6>)
+                (( ${#l_array} == 0 )) && return
+                if (( ${l_array_types[-1]} == ( $var - 3 ) )); then
+                    l_array[-1]=()
+                    l_array_types[-1]=()
                 else
-                    local rpos=$(( i + CURSOR - 1 ))
-                    [[ -n $lpos ]] && break
+                    print "something wrong left"
                 fi
-            fi
-        fi
-
-        if (( $lbuffer_length > 0 )) && [[ -z $lpos ]]; then
-            lchar=${LBUFFER[$CURSOR - i + 1]}
-            lbuffer_length+=-1
-            if (( $__closer[(Ie)$lchar] > 0 )); then
-                left_closer+=1
-            elif (( $__opener[(Ie)$lchar] > 0 )) || [[ $lchar == '"' ]] || [[ $lchar == "'" ]]; then
-                if (( left_closer > 0 )); then
-                    left_closer+=-1
+                ;;
+            (7)
+                if (( single_quotes )); then
+                    l_array[-1]=()
+                    l_array_types[-1]=()
                 else
-                    local lpos=$(( CURSOR - i + 1 ))
-                    [[ -n $rpos ]] && break
+                    l_array_types+=$var
+                    l_array+=$i
                 fi
-            fi
-        fi
+                (( single_quotes ^= 1))
+                ;;
+            (8)
+                if (( double_quotes )); then
+                    l_array_types[-1]=()
+                    l_array[-1]=()
+                else
+                    l_array_types+=$var
+                    l_array+=$i
+                fi
+                (( double_quotes ^= 1))
+                ;;
+            (0) ;;
+        esac
     done
+
+    typeset -a r_array=()
+    typeset -a r_array_types=()
+
+    single_quotes=0
+    double_quotes=0
+
+    for (( i = $#RBUFFER; i >= 1; i-- )); do
+        local var=$__interesting_chars[(Ie)${RBUFFER[i]}]
+        case $var in
+            (<1-3>)
+                (( ${#r_array} == 0 )) && return
+                if (( ${r_array_types[-1]} == ( $var + 3 ) )); then
+                    r_array[-1]=()
+                    r_array_types[-1]=()
+                else
+                    print unmatched  parenthesis
+                fi
+                ;;
+            (<4-6>)
+                r_array+=$i
+                r_array_types+=$var
+                ;;
+            (7)
+                if (( single_quotes )); then
+                    r_array[-1]=()
+                    r_array_types[-1]=()
+                else
+                    r_array_types+=$var
+                    r_array+=$i
+                fi
+                (( single_quotes ^= 1))
+                ;;
+            (8)
+                if (( double_quotes )); then
+                    r_array_types[-1]=()
+                    r_array[-1]=()
+                else
+                    r_array_types+=$var
+                    r_array+=$i
+                fi
+                (( double_quotes ^= 1))
+                ;;
+            (0) ;;
+        esac
+    done
+    local lpos=${l_array[-1]}
+    local rpos=$(( ${r_array[-1]} + $#LBUFFER -1 ))
+
     [[ -n $lpos ]] && [[ -n $rpos ]] || return
+
     zle set-mark-command
     MARK=$lpos
     CURSOR=$rpos
