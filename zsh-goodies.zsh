@@ -195,7 +195,7 @@ find_char () {
     local pos
     for pos in ${positions}
     do
-        region_highlight+=("P$(( $pos -1 )) $pos bold,fg=cyan")
+        region_highlight+="P$(( $pos -1 )) $pos bold,fg=cyan"
     done
 
     zle redisplay
@@ -213,10 +213,7 @@ find_char () {
         CURSOR=${positions[$idx]}
         zle redisplay
     done
-
-    for ((i = 1; i <= $(( $#positions )); i++ )) do
-        region_highlight[-1]=()
-    done
+    region_highlight=(${region_highlight[1,$(( $#region_highlight - $#positions ))]})
 }
 
 zle -N _find_char_forward
