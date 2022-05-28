@@ -243,10 +243,12 @@ expand-selection() {
     typeset -i pop_this_many
     typeset -i single_quotes
     typeset -i double_quotes
+    local var
 
     for (( i = 1; i <= $#LBUFFER; i++ )); do
-        local var=$__interesting_chars[(Ie)${LBUFFER[i]}]
+        var=$__interesting_chars[(Ie)${LBUFFER[i]}]
         case $var in
+            (0) continue ;;
             (<1-3>)
                 l_array+=$i
                 l_array_types+=$var
@@ -286,7 +288,6 @@ expand-selection() {
                     double_quotes=$#l_array
                 fi
                 ;;
-            (0) ;;
         esac
     done
 
@@ -298,8 +299,9 @@ expand-selection() {
     typeset -a r_array_types=()
 
     for (( i = 1; i <= $#RBUFFER; i++ )); do
-        local var=$__interesting_chars[(Ie)${RBUFFER[i]}]
+        var=$__interesting_chars[(Ie)${RBUFFER[i]}]
         case $var in
+            (0) continue ;;
             (<1-3>)
                 r_array+=$i
                 r_array_types+=$var
@@ -308,7 +310,6 @@ expand-selection() {
                 if (( ${#r_array} == 0 )); then
                     if (( ${l_array_types[-1]} == ( $var - 3 ) )); then
                         local rpos=$(( i + $#LBUFFER -1 ))
-                        # print hej
                         break
                     fi
                 elif (( ${r_array_types[-1]} == ( $var - 3 ) )); then
@@ -345,7 +346,6 @@ expand-selection() {
                     break
                 fi
                 ;;
-            (0) ;;
         esac
     done
 
