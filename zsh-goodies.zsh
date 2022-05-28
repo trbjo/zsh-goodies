@@ -168,6 +168,7 @@ find_char_backward() {
 }
 
 find_char () {
+    type -f _zsh_highlight > /dev/null && _zsh_highlight
     local char
     read -k 1 char
 
