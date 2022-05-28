@@ -155,6 +155,7 @@ _find_char_forward() {
     if [[ -n "${POSTDISPLAY}" ]]; then
         BUFFER+="${POSTDISPLAY}"
         unset POSTDISPLAY
+        type -f _zsh_highlight > /dev/null && _zsh_highlight
         zle redisplay
     fi
     [[ -z "$RBUFFER" ]] && return
@@ -446,7 +447,7 @@ remember() {
     if [[ $#BUFFER -eq 0 ]]; then # Nothing in buffer: get previous command.
         BUFFER="${stored}"
         CURSOR=$mycursor
-        _zsh_highlight
+        type -f _zsh_highlight > /dev/null && _zsh_highlight
     else # Store current input.
         mycursor=$CURSOR
         stored=$BUFFER
@@ -490,7 +491,7 @@ function _accept_autosuggestion_or_mark_word() {
     if [[ -n "${POSTDISPLAY}" ]]; then
         BUFFER+="${POSTDISPLAY}"
         unset POSTDISPLAY
-        _zsh_highlight
+        type -f _zsh_highlight > /dev/null && _zsh_highlight
         return
     fi
 
