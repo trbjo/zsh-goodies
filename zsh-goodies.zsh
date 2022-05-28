@@ -234,6 +234,10 @@ expand-selection() {
     if (($REGION_ACTIVE)) && [[ ${BUFFER[$(($CURSOR+1))]} == $__corresponding_chars[${BUFFER[$MARK]}] ]] && (( $#RBUFFER > 0 )) && [[ ${BUFFER[$MARK]} == $__corresponding_chars[${BUFFER[$(($CURSOR+1))]}] ]] && (( $#LBUFFER > 0 )); then
         MARK+=-1
         CURSOR+=1
+        if (($REGION_ACTIVE)) && [[ ${BUFFER[$(($CURSOR+1))]} == $__corresponding_chars[${BUFFER[$MARK]}] ]] && (( $#RBUFFER > 0 )) && [[ ${BUFFER[$MARK]} == $__corresponding_chars[${BUFFER[$(($CURSOR+1))]}] ]] && (( $#LBUFFER > 0 )); then
+            MARK+=-1
+            CURSOR+=1
+        fi
         zle redisplay
         return
     fi
