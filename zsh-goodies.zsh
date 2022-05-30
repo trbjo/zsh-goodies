@@ -497,6 +497,7 @@ function _accept_autosuggestion_or_mark_word() {
         BUFFER+="${POSTDISPLAY}"
         unset POSTDISPLAY
         type -f _zsh_highlight > /dev/null && _zsh_highlight
+        zle redisplay
         return
     fi
 
