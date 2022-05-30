@@ -536,34 +536,21 @@ function _autosuggest_execute_or_clear_screen_or_ls() {
         fi
         zle .accept-line
     else
-        print -n '\033[2J\033[3J\033[H' # hide cursor and clear screen
-        if [[ "${LASTWIDGET}" == "_autosuggest_execute_or_clear_screen_or_ls" ]]; then
-            redefine
-        else
-            redefine::reset
+        print -n "\033[6n\033[2J\033[3J\033[H"            # ask the terminal for the position
+        read -d\[ garbage </dev/tty          # discard the first part of the response
+        read -s -d R foo </dev/tty              # store the position in bash variable 'foo'
+
+        if [[ "${foo%%;*}" -lt 3 ]]; then                  # print the position
+            exa --color=auto --group-directories-first 2> /dev/null || ls --color=auto --group-directories-first
         fi
         preprompt
-        print -Pn ${PROMPT_WS_SEP}
+        [[ ${PROMPT_WS_SEP} ]] && print -Pn ${PROMPT_WS_SEP}
         zle reset-prompt
     fi
+
 }
 zle -N _autosuggest_execute_or_clear_screen_or_ls
 bindkey -e '\e' _autosuggest_execute_or_clear_screen_or_ls
-
-redefine::reset() {
-    redefine::reset() {
-        redefine() {
-            exa --color=auto --group-directories-first 2> /dev/null || ls --color=auto --group-directories-first
-            redefine() {
-                redefine::reset
-            }
-        }
-    }
-    redefine::reset
-    if [[ -z $ZLAST_COMMANDS ]]; then
-        redefine
-    fi
-}
 
 zmodload -i zsh/complist
 bindkey -M menuselect '\e' .accept-line
