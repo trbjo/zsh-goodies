@@ -363,7 +363,6 @@ expand-selection() {
     CURSOR=$rpos
     zle redisplay
     return 0
-
 }
 zle -N expand-selection
 bindkey -e "^Y" expand-selection
@@ -508,15 +507,13 @@ function _accept_autosuggestion_or_mark_word() {
 
     typeset -i lpos rpos=$#BUFFER
     for ((i = $#LBUFFER; i >= 1; i-- )) do
-        if [[ "${LBUFFER[i]}" =~ $'\t|\n| ' ]]
-        then
+        if [[ "${LBUFFER[i]}" =~ $'\t|\n| ' ]]; then
             lpos=$i
             break
         fi
     done
     for ((j = 1; j <= $#RBUFFER; j++ )) do
-        if [[ "${RBUFFER[j]}" =~ $'\t|\n| ' ]]
-        then
+        if [[ "${RBUFFER[j]}" =~ $'\t|\n| ' ]]; then
             rpos=$(($j + $CURSOR -1 ))
             break
         fi
