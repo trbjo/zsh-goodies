@@ -534,18 +534,21 @@ function _autosuggest_execute_or_clear_screen_or_ls() {
         fi
         zle .accept-line
     else
-        print -n "\033[6n\033[2J\033[3J\033[H"            # ask the terminal for the position
-        read -d\[ garbage </dev/tty          # discard the first part of the response
-        read -s -d R foo </dev/tty              # store the position in bash variable 'foo'
+        local garbage termpos
+        print -n "\033[6n\033[2J\033[3J\033[H"   # ask the terminal for the position and clear the screen
+        read -d\[ garbage </dev/tty              # discard the first part of the response
+        read -s -d R termpos </dev/tty               # store the position in bash variable 'termpos'
+        typeset -i col="${termpos%%;*}"
 
-        if [[ "${foo%%;*}" -lt 3 ]]; then                  # print the position
+        if (( col == 1 )); then
             exa --color=auto --group-directories-first 2> /dev/null || ls --color=auto --group-directories-first
+        elif (( col <= 2 )) && [[ ${PROMPT_WS_SEP} ]]; then
+            exa --color=auto --group-directories-first 2> /dev/null || ls --color=auto --group-directories-first
+            print -Pn ${PROMPT_WS_SEP}
         fi
         preprompt
-        [[ ${PROMPT_WS_SEP} ]] && print -Pn ${PROMPT_WS_SEP}
         zle reset-prompt
     fi
-
 }
 zle -N _autosuggest_execute_or_clear_screen_or_ls
 bindkey -e '\e' _autosuggest_execute_or_clear_screen_or_ls
