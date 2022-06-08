@@ -304,7 +304,7 @@ expand-selection() {
     typeset -a r_array_types=()
 
     for (( i = 1; i <= $#RBUFFER; i++ )); do
-        var=$__interesting_chars[(Ie)${RBUFFER[i]}]
+        var=${__interesting_chars[(Ie)${RBUFFER[i]}]}
         case $var in
             (0) continue ;;
             (<1-3>)
