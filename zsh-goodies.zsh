@@ -427,14 +427,13 @@ zle -N insert-mark
 
 # get the length of a string
 length() {
+    local input
     input="$@"
-    if [[ ${#input} -eq 0 ]]
-    then
-        [[ $WAYLAND_DISPLAY ]] && input=$(wl-paste --primary) || input=$CUTBUFFER
+    if [[ ${#input} -eq 0 ]]; then
+        [[ $WAYLAND_DISPLAY ]] && input=${$(wl-paste --primary)//\'/\"} || input=$CUTBUFFER
     fi
-    python3 -c "print(len('$input'))"
+    python3 -c "print(len('''$input'''))"
 }
-
 
 function __calc_plugin {
     myargs="$@"
