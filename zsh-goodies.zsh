@@ -81,9 +81,7 @@ gcl() {
 }
 
 _psql() {
-    [[ -z "$1" ]] && print -l "Variables:"\
-    "PSQL_DB, PSQL_HOST, PSQL_DB, PGPASSWORD" && return
-    [[ "$1" == 'p' ]] && print -l "Current variables:"\
+    [[ -z "$1" ]] && print -l "Current variables:"\
     "  PSQL_DB=${PSQL_DB:-postgres}"\
     "  PSQL_HOST=${PSQL_HOST:-localhost}"\
     "  PSQL_USER=${PSQL_USER:-postgres}"\
