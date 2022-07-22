@@ -88,8 +88,6 @@ _psql() {
     else
         myQuery="$@"
     fi
-    if [[ -n "$PSQL_PW" ]]; then
-
     psql -U ${PSQL_USER:-postgres} -h ${PSQL_HOST:-localhost} ${PSQL_PW:+--password $PSQL_PW }-d ${PSQL_DB:-postgres} <<< "$myQuery"
 }
 alias p='noglob _psql'
