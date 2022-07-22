@@ -82,13 +82,15 @@ gcl() {
 
 _psql() {
     [[ -z "$1" ]] && print -l "Variables:"\
-    "PSQL_DB, PSQL_HOST, PSQL_DB" && return
+    "PSQL_DB, PSQL_HOST, PSQL_DB, PSQL_PW" && return
     if [[ ${1:0:1} == "d" ]]; then
         myQuery="\\$@"
     else
         myQuery="$@"
     fi
-    psql -U ${PSQL_USER:-postgres} -h ${PSQL_HOST:-localhost} -d ${PSQL_DB:-postgres} <<< "$myQuery"
+    if [[ -n "$PSQL_PW" ]]; then
+
+    psql -U ${PSQL_USER:-postgres} -h ${PSQL_HOST:-localhost} ${PSQL_PW:+--password $PSQL_PW }-d ${PSQL_DB:-postgres} <<< "$myQuery"
 }
 alias p='noglob _psql'
 
