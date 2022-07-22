@@ -87,7 +87,7 @@ _psql() {
     "  PSQL_DB=${PSQL_DB:-postgres}"\
     "  PSQL_HOST=${PSQL_HOST:-localhost}"\
     "  PSQL_USER=${PSQL_USER:-postgres}"\
-    "  PGPASSWORD=$PSQL_DB" && return
+    "  PGPASSWORD=$PGPASSWORD" && return
 
     if [[ ${1:0:1} == "d" ]]; then
         myQuery="\\$@"
