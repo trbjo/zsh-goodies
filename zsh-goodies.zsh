@@ -81,11 +81,15 @@ gcl() {
 }
 
 _psql() {
-    [[ -z "$1" ]] && print -l "Current variables:"\
-    "  PSQL_DB=${PSQL_DB:-postgres}"\
-    "  PSQL_HOST=${PSQL_HOST:-localhost}"\
-    "  PSQL_USER=${PSQL_USER:-postgres}"\
-    "  PGPASSWORD=$PGPASSWORD" && return
+    if [[ -z "$1" ]]; then
+        [[ -n $PGPASSWORD ]] && psql -U ${PSQL_USER:-postgres} -h ${PSQL_HOST:-localhost} -d ${PSQL_DB:-postgres} ||\
+        print -l "Current variables:"\
+        "  PSQL_DB=${PSQL_DB:-postgres}"\
+        "  PSQL_HOST=${PSQL_HOST:-localhost}"\
+        "  PSQL_USER=${PSQL_USER:-postgres}"\
+        "  PGPASSWORD=$PGPASSWORD"
+        return
+    fi
 
     if [[ ${1:0:1} == "d" ]]; then
         myQuery="\\$@"
