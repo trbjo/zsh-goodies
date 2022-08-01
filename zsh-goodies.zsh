@@ -90,13 +90,7 @@ _psql() {
         "  PGPASSWORD=$PGPASSWORD"
         return
     fi
-
-    if [[ ${1:0:1} == "d" ]]; then
-        myQuery="\\$@"
-    else
-        myQuery="$@"
-    fi
-    psql -U ${PSQL_USER:-postgres} -h ${PSQL_HOST:-localhost} -d ${PSQL_DB:-postgres} <<< "$myQuery"
+    psql -U ${PSQL_USER:-postgres} -h ${PSQL_HOST:-localhost} -d ${PSQL_DB:-postgres} <<< "${*}"
 }
 alias p='noglob _psql'
 
