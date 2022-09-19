@@ -24,6 +24,14 @@ up() {
     esac
 }
 
+lines() {
+    for file in $@; do
+        _colorizer "$file" " "
+        print -n ' '
+        cat "$file" | wc -l
+    done
+}
+
 _up() {
     (( $#words > 2 )) && return
     compadd -V segments -- ${(Oas:/:)${PWD%/*}}
