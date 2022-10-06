@@ -103,17 +103,21 @@ _psql() {
 alias p='noglob _psql'
 
 # this is meant to be bound to the same key as the terminal paste key
-delete_active_selection() {
-    if ((REGION_ACTIVE)) then
-        if [[ $CURSOR -gt $MARK ]]; then
-            BUFFER=$BUFFER[0,MARK]$BUFFER[CURSOR+1,-1]
-            CURSOR=$MARK
-        else
-            BUFFER=$BUFFER[1,CURSOR]$BUFFER[MARK+1,-1]
+if [[ $WAYLAND_DISPLAY ]]; then
+    delete_active_selection() {
+        if ((REGION_ACTIVE)) then
+            if [[ $CURSOR -gt $MARK ]]; then
+                BUFFER=$BUFFER[0,MARK]$BUFFER[CURSOR+1,-1]
+                CURSOR=$MARK
+            else
+                BUFFER=$BUFFER[1,CURSOR]$BUFFER[MARK+1,-1]
+            fi
+            zle set-mark-command -n -1
         fi
-        zle set-mark-command -n -1
-    fi
-}
+    }
+else
+    delete_active_selection() {}
+fi
 zle -N delete_active_selection
 bindkey "\ee" delete_active_selection
 
@@ -495,6 +499,66 @@ repeat-last-command-or-complete-entry() {
 zle -N repeat-last-command-or-complete-entry
 bindkey '\t' repeat-last-command-or-complete-entry
 (( ${+ZSH_AUTOSUGGEST_CLEAR_WIDGETS} )) && ZSH_AUTOSUGGEST_CLEAR_WIDGETS+=(repeat-last-command-or-complete-entry)
+
+typeset -gA __matchers=("\"" "\"" "'" "'" "[" "]" "(" ")" "{" "}")
+backward-delete-char() {
+    # goes back in the cd history
+    if [[ -z "$BUFFER" ]]; then
+        print -n '\e[?25l'
+        for (( i = 1; i <= ${#dirstack[@]}; i++ )) do
+            if [[ "$dirstack[$i]" != "$_dirstack[$i]" ]]; then
+                mydirs=()
+                break
+            fi
+        done
+        [[ "${dirstack[1]}" == "$PWD" ]] && popd > /dev/null 2>&1
+        [[  ${#dirstack} -lt 1 ]] && print -n '\e[?25h' && return
+        [[ "${mydirs[-1]}" == "$PWD" ]] || mydirs+=("$PWD")
+        local preexec precmd
+        for preexec in $preexec_functions
+        do
+            $preexec
+        done
+        popd > /dev/null 2>&1
+        _dirstack=($dirstack[@])
+        print -n "\033[F\r"
+        for precmd in $precmd_functions
+        do
+            $precmd
+        done
+        zle reset-prompt
+        print -n '\e[?25h'
+        return 0
+    fi
+
+    if ((REGION_ACTIVE)) then
+        if [[ $CURSOR -gt $MARK ]]; then
+            BUFFER=$BUFFER[0,MARK]$BUFFER[CURSOR+1,-1]
+            CURSOR=$MARK
+        else
+            BUFFER=$BUFFER[1,CURSOR]$BUFFER[MARK+1,-1]
+        fi
+        zle set-mark-command -n -1
+    else
+        if [[ "$BUFFER" == "${_ZSH_FILE_OPENER_CMD} " ]]; then
+            printf "\033[J"
+            zle .backward-delete-char
+            zle .backward-delete-char
+        else
+            local left_char="${LBUFFER: -1}"
+            local left_left_char="${LBUFFER: -2:1}"
+            local right_char="${RBUFFER:0:1}"
+            if [[ -n "$left_char" ]] && [[ -n "$right_char" ]] && [[ "${__matchers[$left_char]}" == "$right_char" ]]; then
+                zle .delete-char
+            elif [[ -n "$left_char" ]] && [[ -n "$left_left_char" ]] && [[ "${__matchers[$left_left_char]}" == "$left_char" ]]; then
+                zle .backward-delete-char
+            fi
+            zle .backward-delete-char
+        fi
+    fi
+}
+zle -N backward-delete-char
+bindkey "^?" backward-delete-char
 
 gr() {
     gittest=$(git rev-parse --show-toplevel) > /dev/null 2>&1 && cd $gittest || print "Not in a git dir"
