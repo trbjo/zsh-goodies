@@ -469,7 +469,7 @@ remember() {
     else # Store current input.
         mycursor=$CURSOR
         stored=$BUFFER
-        zle kill-buffer
+        zle .kill-buffer
         zle reset-prompt
     fi
 }
