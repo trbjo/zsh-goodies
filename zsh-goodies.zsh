@@ -69,7 +69,7 @@ fi
 
 
 gcl() {
-    [[ ! -d "${HOME}/code" ]] && mkdir -p "${HOME}/code"
+    [[ -d "${HOME}/code" ]] || mkdir -p "${HOME}/code"
     cd "${HOME}/code"
     local -a elements
     local repo
