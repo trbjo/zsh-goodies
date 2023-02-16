@@ -201,9 +201,9 @@ find_char () {
     while read -k 1 key
     do
         case $key in
-            ($'\r') idx+=1
+            ($CHAR_FWD_KEY) idx+=1
                 (( $idx > ${#positions} )) && break ;;
-            ($'\022') idx+=-1
+            ($CHAR_BWD_KEY) idx+=-1
                 (( $idx == 0 )) && break ;;
             (*) zle -U "$key"
                 break ;;
@@ -213,6 +213,9 @@ find_char () {
     done
     region_highlight=(${region_highlight[1,$(( $#region_highlight - $#positions ))]})
 }
+
+CHAR_FWD_KEY=$'\r'
+CHAR_BWD_KEY=$'\022'
 
 zle -N _find_char_forward
 bindkey -e "^T" _find_char_forward
@@ -542,7 +545,7 @@ zle -N backward-delete-char
 bindkey "^?" backward-delete-char
 
 gr() {
-    gittest=$(git rev-parse --show-toplevel) > /dev/null 2>&1 && cd $gittest || print "Not in a git dir"
+    gittest="$(git rev-parse --show-toplevel)" && cd "$gittest"
 }
 
 function _accept_autosuggestion_or_mark_word() {
