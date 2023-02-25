@@ -484,6 +484,46 @@ zle -N repeat-last-command-or-complete-entry
 bindkey '\t' repeat-last-command-or-complete-entry
 (( ${+ZSH_AUTOSUGGEST_CLEAR_WIDGETS} )) && ZSH_AUTOSUGGEST_CLEAR_WIDGETS+=(repeat-last-command-or-complete-entry)
 
+# navigate dirs with backspace/shift+backspace
+setopt AUTO_PUSHD
+typeset -a _dirstack
+typeset -a mydirs
+forward_dir() {
+    # mydirs is not regulated when we push to the stack,
+    # so we have to check for elements manually:
+    [[ "${mydirs[-1]}" == "$PWD" ]] && mydirs[-1]=()
+    [[  ${#mydirs} -lt 1 ]] && return
+    print -n '\e[?25l'
+    for (( i = 1; i <= ${#dirstack[@]}; i++ )) do
+        if [[ "$dirstack[$i]" != "$_dirstack[$i]" ]]; then
+            mydirs=()
+            _dirstack=()
+            print -n '\e[?25h'
+            return
+        fi
+    done
+
+    local preexec precmd
+    for preexec in $preexec_functions
+    do
+        $preexec
+    done
+    _dirstack=("$PWD" "$_dirstack[@]")
+    cd "${mydirs[-1]}" > /dev/null 2>&1
+    mydirs[-1]=()
+    print -n "\033[F\r"
+    for precmd in $precmd_functions
+    do
+        $precmd
+    done
+    zle reset-prompt
+    print -n '\e[?25h'
+    return 0
+    }
+zle -N forward_dir
+bindkey '^]' forward_dir
+
+
 typeset -gA __matchers=("\"" "\"" "'" "'" "[" "]" "(" ")" "{" "}")
 backward-delete-char() {
     # goes back in the cd history
