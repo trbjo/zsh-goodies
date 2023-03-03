@@ -24,6 +24,15 @@ up() {
     esac
 }
 
+accept-line() {
+    export exec_time=" %F{5}$(date +%T)%f"
+    zle reset-prompt
+    unset exec_time
+
+    zle .accept-line
+}
+zle -N accept-line
+
 lines() {
     for file in $@; do
         _colorizer "$file" " "
@@ -630,7 +639,7 @@ function _autosuggest_execute_or_clear_screen_or_ls() {
             BUFFER+="${POSTDISPLAY}"
             unset POSTDISPLAY
         fi
-        zle .accept-line
+        zle accept-line
     else
         local garbage termpos
         print -n "\033[6n\033[2J\033[3J\033[H"   # ask the terminal for the position and clear the screen
