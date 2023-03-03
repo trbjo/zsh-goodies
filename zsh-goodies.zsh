@@ -98,16 +98,21 @@ gcl() {
 }
 
 _psql() {
+    [[ -z $PGDATABASE ]] && local PGDATABASE=postgres
+    [[ -z $PGHOST ]] && local PGHOST=localhost
+    [[ -z $PGPORT ]] && local PGPORT=5432
+    [[ -z $PGUSER ]] && local PGUSER=postgres
     if [[ -z "$1" ]]; then
-        [[ -n $PGPASSWORD ]] && psql -U ${PSQL_USER:-postgres} -h ${PSQL_HOST:-localhost} -d ${PSQL_DB:-postgres} ||\
+        [[ -n $PGPASSWORD ]] && psql -U ${PGUSER} -h ${PGHOST} -d ${PGDATABASE} ||\
         print -l "Current variables:"\
-        "  PSQL_DB=${PSQL_DB:-postgres}"\
-        "  PSQL_HOST=${PSQL_HOST:-localhost}"\
-        "  PSQL_USER=${PSQL_USER:-postgres}"\
+        "  PGDATABASE=${PGDATABASE}"\
+        "  PGHOST=${PGHOST}"\
+        "  PGPORT=${PGPORT}"\
+        "  PGUSER=${PGUSER}"\
         "  PGPASSWORD=$PGPASSWORD"
         return
     fi
-    psql -U ${PSQL_USER:-postgres} -h ${PSQL_HOST:-localhost} -d ${PSQL_DB:-postgres} <<< "${*}"
+    psql -U ${PGUSER} -h ${PGHOST} -d ${PGDATABASE} <<< "${*}"
 }
 alias p='noglob _psql'
 
