@@ -25,7 +25,7 @@ up() {
 }
 
 accept-line() {
-    export exec_time=" %F{5}$(date +%T)%f"
+    export exec_time=" %F{3}%D{%T}%f"
     zle reset-prompt
     unset exec_time
 
