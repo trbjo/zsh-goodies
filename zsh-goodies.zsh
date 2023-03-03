@@ -24,15 +24,6 @@ up() {
     esac
 }
 
-accept-line() {
-    export exec_time=" %F{3}%D{%T}%f"
-    zle reset-prompt
-    unset exec_time
-
-    zle .accept-line
-}
-zle -N accept-line
-
 lines() {
     for file in $@; do
         _colorizer "$file" " "
