@@ -14,7 +14,7 @@ up() {
         (<->) $op $(printf '../%.0s' {1..$1});;
         (@) local cdup; cdup=$(git rev-parse --show-cdup) && $op $cdup;;
         (*) local -a seg; seg=(${(s:/:)PWD%/*})
-        local n=${(j:/:)seg[1,(I)$1*]}
+        local n=${(j:/:)seg[1,(I)*$1*]}
         if [[ -n $n ]]; then
             $op /$n
         else
@@ -24,19 +24,20 @@ up() {
     esac
 }
 
+_up() {
+    (( $#words > 2 )) && return
+    compadd -M 'm:{a-zA-Z}={A-Za-z}' -M 'r:|[._-]=* r:|=*' -M 'l:|=* r:|=*' -- ${(Oas:/:)${PWD%/*}}
+}
+compdef _up up
+
 lines() {
     for file in $@; do
-        _colorizer "$file" " "
+        _colorizer "$file"
         print -n ' '
         cat "$file" | wc -l
     done
 }
 
-_up() {
-    (( $#words > 2 )) && return
-    compadd -V segments -- ${(Oas:/:)${PWD%/*}}
-}
-compdef _up up
 
 # nvm takes too long to source, we only source it if we need to
 nvm() {
@@ -94,7 +95,7 @@ _psql() {
     [[ -z $PGPORT ]] && local PGPORT=5432
     [[ -z $PGUSER ]] && local PGUSER=postgres
     if [[ -z "$1" ]]; then
-        [[ -n $PGPASSWORD ]] && psql -U ${PGUSER} -h ${PGHOST} -d ${PGDATABASE} ||\
+        psql -U ${PGUSER} -h ${PGHOST} -d ${PGDATABASE} ||\
         print -l "Current variables:"\
         "  PGDATABASE=${PGDATABASE}"\
         "  PGHOST=${PGHOST}"\
@@ -103,20 +104,21 @@ _psql() {
         "  PGPASSWORD=$PGPASSWORD"
         return
     fi
-    psql -U ${PGUSER} -h ${PGHOST} -d ${PGDATABASE} <<< "${*}"
+    if [[ ${#@} -eq 1 ]]; then
+        psql -U ${PGUSER} -h ${PGHOST} -d ${PGDATABASE} <<< ${@}
+    else
+        psql -U ${PGUSER} -h ${PGHOST} -d ${PGDATABASE} ${@}
+    fi
 }
 alias p='noglob _psql'
 
 cdParentKey() {
     [[ $PWD == '/' ]] && return 0
     cd ..
-    clear
-    exa --group-directories-first
-    print
     for cmd in $precmd_functions; do
         $cmd
     done
-    zle       reset-prompt
+    zle .reset-prompt
 }
 zle -N                 cdParentKey
 bindkey '^[[1;5A'      cdParentKey
@@ -645,9 +647,9 @@ function _autosuggest_execute_or_clear_screen_or_ls() {
 
         if (( col == 1 )); then
             exa --color=auto --group-directories-first 2> /dev/null || ls --color=auto --group-directories-first
-        elif (( col <= 2 )) && [[ ${PROMPT_WS_SEP} ]]; then
+        elif (( col <= 2 )) && (( ${PROMPT_WS_SEP+1} )); then
             exa --color=auto --group-directories-first 2> /dev/null || ls --color=auto --group-directories-first
-            print -Pn ${PROMPT_WS_SEP}
+            print
         fi
         preprompt
         zle reset-prompt
@@ -658,3 +660,17 @@ bindkey -e '\e' _autosuggest_execute_or_clear_screen_or_ls
 
 zmodload -i zsh/complist
 bindkey -M menuselect '\e' .accept-line
+
+
+repeat_or_menu_complete() {
+    if [[ -z $BUFFER ]]; then
+        eval $(fc -nl | tail -1) |& wl-copy -n
+    else
+        zle reverse-menu-complete
+    fi
+    return 0
+}
+zle -N repeat_or_menu_complete
+
+bindkey -M emacs "^[[Z" repeat_or_menu_complete
+bindkey -M menuselect '^[[Z' reverse-menu-complete
