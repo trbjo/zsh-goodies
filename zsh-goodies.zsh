@@ -18,7 +18,7 @@ up() {
         if [[ -n $n ]]; then
             $op /$n
         else
-            print -u2 up: could not find prefix $1 in $PWD
+            print -u2 $0: could not find prefix $1 in $PWD
             return 1
         fi
     esac
@@ -26,7 +26,7 @@ up() {
 
 _up() {
     (( $#words > 2 )) && return
-    compadd -M 'm:{a-zA-Z}={A-Za-z}' -M 'r:|[._-]=* r:|=*' -M 'l:|=* r:|=*' -- ${(Oas:/:)${PWD%/*}}
+    compadd -o nosort -M 'm:{a-zA-Z}={A-Za-z}' -M 'r:|[._-]=* r:|=*' -M 'l:|=* r:|=*' -- ${(s:/:)${PWD%/*}}
 }
 compdef _up up
 
