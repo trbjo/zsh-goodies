@@ -5,6 +5,37 @@ mkcd() {
   cd "$1"
 }
 
+n() {
+    local exit_code=$?
+    local message title icon
+    /usr/bin/gdbus call --system --dest org.freedesktop.login1 --object-path /org/freedesktop/login1/session/auto --method org.freedesktop.login1.Session.SetIdleHint false > /dev/null 2>&1
+
+    if [[ -z $@ ]]; then
+        message="$(fc -ln -1 -1)"
+        if [[ $exit_code -eq 0 ]]; then
+            title="Success"
+            icon="process-completed"
+        else
+            title="Failure $exit_code"
+            icon="dialog-error"
+        fi
+    else
+        if "$@"; then
+            title="Success"
+            icon="process-completed"
+        else
+            exit_code=$?
+            title="Failure $exit_code"
+            icon="dialog-error"
+        fi
+        message="$*"
+    fi
+
+    type swaymsg > /dev/null 2>&1 && swaymsg -q "output * power on" > /dev/null 2>&1
+    printf "\033]777;notify;$title;$message\e"
+    return "${exit_code:-0}"
+}
+
 up() {
     local op=print
     [[ -t 1 ]] && op=cd
