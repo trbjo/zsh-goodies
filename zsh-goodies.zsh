@@ -733,3 +733,10 @@ cpp() {
     fi
     printf "\033]52;c;$(print -r -n -- "$text" | base64 -w 0)\a$text"
 }
+
+function copytoclipboard() {
+    IFS= read -r -d '' input
+    printf "\033]52;c;$(print -r -n -- "$input" | base64 -w 0)\a$input"
+}
+
+alias -g CC=' |& copytoclipboard'
