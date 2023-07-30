@@ -685,3 +685,51 @@ zle -N repeat_or_menu_complete
 
 bindkey -M emacs "^[[Z" repeat_or_menu_complete
 bindkey -M menuselect '^[[Z' reverse-menu-complete
+
+
+
+kill-buffer() {
+    [[ -z $BUFFER ]] && return 0
+
+    local text a b
+
+    if (( ! REGION_ACTIVE )); then
+        a=0
+        b=${#BUFFER}
+    elif [[ $CURSOR -gt $MARK ]]; then
+        a=$MARK
+        b=$CURSOR
+    else
+        a=$CURSOR
+        b=$MARK
+    fi
+
+    text="${BUFFER[$a+1,$b]}"
+    text=$(print -r -n -- "$text" | base64 -w 0)
+    printf "\033]52;c;$text\a"
+
+    if [[ -z "$@" ]]; then
+        BUFFER=${BUFFER[0,$a]}${BUFFER[$b+1,$#BUFFER]}
+        CURSOR=$a
+    fi
+
+    zle deactivate-region -w
+
+}
+zle -N kill-buffer
+bindkey -e "^U" kill-buffer
+
+copy_buffer() { kill-buffer copy }
+zle -N copy_buffer
+bindkey -e "\ew" copy_buffer
+
+
+# copies the full path of a file for later mv
+cpp() {
+    if [[ ${#@} == 0 ]]; then
+        text="$(pwd)"
+    else
+        text="$(realpath "${1}")"
+    fi
+    printf "\033]52;c;$(print -r -n -- "$text" | base64 -w 0)\a$text"
+}
