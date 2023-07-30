@@ -233,6 +233,17 @@ bindkey -e "^B" find_char_backward
 typeset -ga __interesting_chars=("(" "{" "[" ")"  "}" "]" "'" '"' )
 typeset -gA __corresponding_chars=("(" ")" ")" "(" "{" "}" "}" "{" "[" "]" "]" "[" "'" "'" '"' '"' )
 
+# This function checks if the region is active, and if so, it deletes it
+function delete-region-if-active {
+    if ((REGION_ACTIVE)); then
+        zle .kill-region
+    fi
+    zle .self-insert
+}
+
+# Replace the default self-insert widget with our custom one
+zle -N self-insert delete-region-if-active
+
 expand-selection() {
 
     (( $#BUFFER == 0 )) && return
