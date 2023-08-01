@@ -101,8 +101,6 @@ fi
 
 
 gcl() {
-    [[ -d "${HOME}/code" ]] || mkdir -p "${HOME}/code"
-    cd "${HOME}/code"
     local -a elements
     local repo
     elements=("${(@s:/:)1}")
@@ -113,11 +111,18 @@ gcl() {
         fi
     done
 
-    git clone "${repo}" &&\
-    cd "${${${repo/%\//}##*/}//.git/}"
-    # the expr is read inside out. First, if the last char is '/' ('%' means last) we replace it with ''.
-    # then we remove everything before the last '/' (string has now mutated), and finally, if the string
-    # ends with .git, we remove that
+    local localdir
+    if [[ -z "$2" ]]; then
+        localdir="${${${repo/%\//}##*/}//.git/}"
+        # the expr is read inside out. First, if the last char is '/' ('%' means last) we replace it with ''.
+        # then we remove everything before the last '/' (string has now mutated), and finally, if the string
+        # ends with .git, we remove that
+    else
+        localdir="$2"
+    fi
+
+    git clone "${repo}" $localdir &&\
+    cd $localdir
 }
 
 _psql() {
@@ -572,6 +577,15 @@ forward_dir() {
 zle -N forward_dir
 bindkey '^]' forward_dir
 
+delete-char-or-region() {
+    if ((REGION_ACTIVE)) then
+        zle .kill-region
+    else
+        zle .delete-char
+    fi
+}
+zle -N delete-char-or-region
+bindkey "^D" delete-char-or-region
 
 typeset -gA __matchers=("\"" "\"" "'" "'" "[" "]" "(" ")" "{" "}")
 backward-delete-char() {
@@ -735,17 +749,16 @@ kill-buffer() {
         b=$MARK
     fi
 
+    zle deactivate-region -w
+
     text="${BUFFER[$a+1,$b]}"
     text=$(print -r -n -- "$text" | base64 -w 0)
     printf "\033]52;c;$text\a"
 
-    if [[ -z "$@" ]]; then
-        BUFFER=${BUFFER[0,$a]}${BUFFER[$b+1,$#BUFFER]}
-        CURSOR=$a
-    fi
+    [[ $1 == "copy" ]] && return
 
-    zle deactivate-region -w
-
+    BUFFER=${BUFFER[0,$a]}${BUFFER[$b+1,$#BUFFER]}
+    CURSOR=$a
 }
 zle -N kill-buffer
 bindkey -e "^U" kill-buffer
