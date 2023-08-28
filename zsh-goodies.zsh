@@ -273,6 +273,8 @@ typeset -gA __corresponding_chars=("(" ")" ")" "(" "{" "}" "}" "{" "[" "]" "]" "
 function delete-region-if-active {
     if ((REGION_ACTIVE)); then
         zle .kill-region
+        zle .self-insert
+        return
     fi
     zle .self-insert
 }
@@ -512,7 +514,7 @@ remember() {
     fi
 }
 zle -N remember
-bindkey '^Q' remember
+bindkey '^B' remember
 
 # Makes tab repeat the last command if the buffer is empty.
 # if the char to the right of the cursor is a 'closer', tab moves one char to the right
@@ -767,14 +769,21 @@ copy_buffer() { kill-buffer copy }
 zle -N copy_buffer
 bindkey -e "\ew" copy_buffer
 
+paste_buffer() {
+    (( REGION_ACTIVE )) && zle .kill-region
+    LBUFFER+=$(wl-paste -n)
+}
+zle -N paste_buffer
+bindkey -e "^K" paste_buffer
+
 
 # copies the full path of a file for later mv
-cpp() {
-    if [[ ${#@} == 0 ]]; then
-        text="$(pwd)"
-    else
-        text="$(realpath "${1}")"
-    fi
+cpa() {
+    text="$(realpath "${1:-$PWD}")"
+    printf "\033]52;c;$(print -r -n -- "$text" | base64 -w 0)\a$text"
+}
+cph() {
+    text="${$(realpath "${1:-$PWD}")/#$HOME/~}"
     printf "\033]52;c;$(print -r -n -- "$text" | base64 -w 0)\a$text"
 }
 
