@@ -780,7 +780,7 @@ copy_buffer() { kill-buffer copy }
 zle -N copy_buffer
 bindkey -e "\ew" copy_buffer
 
-paste_buffer() {
+lolololol() {
     (( REGION_ACTIVE )) && zle .kill-region
     local response garbage
     printf '\033]52;c;?\a' > /dev/tty
@@ -790,8 +790,8 @@ paste_buffer() {
     LBUFFER+="$(print -r -n -- "$response" | base64 -d)"
     return 0
 }
-zle -N paste_buffer
-bindkey -e "^K" paste_buffer
+zle -N lolololol
+# bindkey -e "^K" lolololol
 
 
 # copies the full path of a file for later mv
@@ -817,14 +817,10 @@ function copytoclipboard() {
 
 alias -g CC=' |& copytoclipboard'
 
-
 # ensures an active region is deleted first
-autoload -Uz bracketed-paste
+autoload -Uz bracketed-paste-magic
 function my-bracketed-paste() {
-    if (( REGION_ACTIVE )); then
-        zle .kill-region
-    fi
-  zle .bracketed-paste
+    (( REGION_ACTIVE )) && zle .kill-region
+    zle .bracketed-paste-magic
 }
-
-zle -N bracketed-paste my-bracketed-paste
+zle -N bracketed-paste-magic my-bracketed-paste
