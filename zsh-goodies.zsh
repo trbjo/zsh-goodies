@@ -811,7 +811,7 @@ cpg() {
 }
 
 function copytoclipboard() {
-    IFS= read -r -d '' input
+    read -s -r -d '' input
     printf "\033]52;c;$(print -r -n -- "$input" | base64 -w 0)\a$input"
 }
 
