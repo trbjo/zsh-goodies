@@ -782,7 +782,13 @@ bindkey -e "\ew" copy_buffer
 
 paste_buffer() {
     (( REGION_ACTIVE )) && zle .kill-region
-    LBUFFER+=$(wl-paste -n)
+    local response garbage
+    printf '\033]52;c;?\a' > /dev/tty
+    read -r -s -d 'c' garbage < /dev/tty
+    read -r -s -d ';' garbage < /dev/tty
+    read -d $'\a' -r response < /dev/tty
+    LBUFFER+="$(print -r -n -- "$response" | base64 -d)"
+    return 0
 }
 zle -N paste_buffer
 bindkey -e "^K" paste_buffer
