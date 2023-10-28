@@ -1,4 +1,4 @@
-alias findip='curl -s icanhazip.com'
+alias findip='curl --connect-timeout 0.5 -s icanhazip.com'
 
 mkcd() {
   command mkdir -p "$1"
@@ -263,11 +263,13 @@ CHAR_BWD_KEY=$'\022'
 zle -N _find_char_forward
 bindkey -e "^T" _find_char_forward
 zle -N find_char_backward
-bindkey -e "^B" find_char_backward
+bindkey -e "^G" find_char_backward
 
 
 typeset -ga __interesting_chars=("(" "{" "[" ")"  "}" "]" "'" '"' )
-typeset -gA __corresponding_chars=("(" ")" ")" "(" "{" "}" "}" "{" "[" "]" "]" "[" "'" "'" '"' '"' )
+typeset -gA __char_pairs=("(" ")" ")" "(" "{" "}" "}" "{" "[" "]" "]" "[" "'" "'" '"' '"' )
+typeset -gA parens=("[" "]" "]" "[" )
+
 
 # This function checks if the region is active, and if so, it deletes it
 function delete-region-if-active {
@@ -285,16 +287,25 @@ zle -N self-insert delete-region-if-active
 expand-selection() {
 
     (( $#BUFFER == 0 )) && return
-
-    if (($REGION_ACTIVE)) && [[ ${BUFFER[$(($CURSOR+1))]} == $__corresponding_chars[${BUFFER[$MARK]}] ]] && (( $#RBUFFER > 0 )) && [[ ${BUFFER[$MARK]} == $__corresponding_chars[${BUFFER[$(($CURSOR+1))]}] ]] && (( $#LBUFFER > 0 )); then
-        MARK+=-1
-        CURSOR+=1
-        if (($REGION_ACTIVE)) && [[ ${BUFFER[$(($CURSOR+1))]} == $__corresponding_chars[${BUFFER[$MARK]}] ]] && (( $#RBUFFER > 0 )) && [[ ${BUFFER[$MARK]} == $__corresponding_chars[${BUFFER[$(($CURSOR+1))]}] ]] && (( $#LBUFFER > 0 )); then
+    if (($REGION_ACTIVE)); then
+        local cmatch mmatch clookup mlookup
+        (( $#LBUFFER > 0 )) && (( $#RBUFFER > 0 )) || return
+        cmatch="${BUFFER[$(($CURSOR+1))]}"
+        mmatch="${BUFFER[$MARK]}"
+        clookup="${__char_pairs[$mmatch]}"
+        mlookup="${__char_pairs[$cmatch]}"
+        if [[ $cmatch == $clookup ]] && [[ $mmatch == $mlookup ]]; then
             MARK+=-1
             CURSOR+=1
+            (( $#LBUFFER > 0 )) && (( $#RBUFFER > 0 )) || return
+            if [[ ${BUFFER[$(($CURSOR+1))]} == $clookup ]] && \
+                [[ ${BUFFER[$MARK]} == $mlookup ]]; then
+                MARK+=-1
+                CURSOR+=1
+            fi
+            zle redisplay
+            return
         fi
-        zle redisplay
-        return
     fi
 
     typeset -a l_array=()
@@ -784,6 +795,12 @@ cpa() {
 }
 cph() {
     text="${$(realpath "${1:-$PWD}")/#$HOME/~}"
+    printf "\033]52;c;$(print -r -n -- "$text" | base64 -w 0)\a$text"
+}
+cpg() {
+    text="$(realpath "${1:-$PWD}")"
+    git_root="$(git rev-parse --show-toplevel)"
+    text=${text//#$git_root/}
     printf "\033]52;c;$(print -r -n -- "$text" | base64 -w 0)\a$text"
 }
 
