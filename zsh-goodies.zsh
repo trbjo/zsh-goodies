@@ -816,3 +816,15 @@ function copytoclipboard() {
 }
 
 alias -g CC=' |& copytoclipboard'
+
+
+# ensures an active region is deleted first
+autoload -Uz bracketed-paste
+function my-bracketed-paste() {
+    if (( REGION_ACTIVE )); then
+        zle .kill-region
+    fi
+  zle .bracketed-paste
+}
+
+zle -N bracketed-paste my-bracketed-paste
