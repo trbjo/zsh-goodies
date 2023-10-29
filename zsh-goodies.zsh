@@ -161,20 +161,12 @@ bindkey '^[[1;5A'      cdParentKey
 
 
 fancy-ctrl-z () {
-    if [[ $#BUFFER -eq 0 ]]
-    then
-        if [[ -z $jobstates ]]; then
-            BUFFER="htop"
-            zle accept-line -w
-        else
-            BUFFER="fg"
-            zle accept-line -w
-        fi
+    if [[ -z $jobstates ]]; then
+        BUFFER="htop"
     else
-        # zle kill-buffer
-        zle push-input -w
-        zle clear-screen -w
+        BUFFER="fg"
     fi
+    zle accept-line -w
 }
 zle -N fancy-ctrl-z
 bindkey '^Z' fancy-ctrl-z
@@ -818,9 +810,10 @@ function copytoclipboard() {
 alias -g CC=' |& copytoclipboard'
 
 # ensures an active region is deleted first
+autoload -Uz bracketed-paste
 autoload -Uz bracketed-paste-magic
 function my-bracketed-paste() {
     (( REGION_ACTIVE )) && zle .kill-region
-    zle .bracketed-paste-magic
+    zle .bracketed-paste
 }
-zle -N bracketed-paste-magic my-bracketed-paste
+zle -N bracketed-paste my-bracketed-paste
