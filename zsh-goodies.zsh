@@ -707,9 +707,9 @@ function _autosuggest_execute_or_clear_screen_or_ls() {
         typeset -i col="${termpos%%;*}"
 
         if (( col == 1 )); then
-            eza --hyperlink --color=auto --group-directories-first 2> /dev/null || ls --color=auto --group-directories-first
+            ls --hyperlink=always --color=auto --group-directories-first
         elif (( col <= 2 )) && (( ${PROMPT_WS_SEP+1} )); then
-            eza --hyperlink --color=auto --group-directories-first 2> /dev/null || ls --color=auto --group-directories-first
+            ls --hyperlink=always --color=auto --group-directories-first
             print
         fi
         preprompt
