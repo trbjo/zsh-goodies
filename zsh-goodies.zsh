@@ -562,23 +562,12 @@ forward_dir() {
         fi
     done
 
-    local preexec precmd
-    for preexec in $preexec_functions
-    do
-        $preexec
-    done
     _dirstack=("$PWD" "$_dirstack[@]")
     cd "${mydirs[-1]}" > /dev/null 2>&1
     mydirs[-1]=()
-    print -n "\033[F\r"
-    for precmd in $precmd_functions
-    do
-        $precmd
-    done
-    zle reset-prompt
-    print -n '\e[?25h'
-    return 0
-    }
+
+    zle fzf-redraw-prompt
+}
 zle -N forward_dir
 bindkey '^]' forward_dir
 
@@ -606,19 +595,10 @@ backward-delete-char() {
         [[ "${dirstack[1]}" == "$PWD" ]] && popd > /dev/null 2>&1
         [[  ${#dirstack} -lt 1 ]] && print -n '\e[?25h' && return
         [[ "${mydirs[-1]}" == "$PWD" ]] || mydirs+=("$PWD")
-        local preexec precmd
-        for preexec in $preexec_functions
-        do
-            $preexec
-        done
+
         popd > /dev/null 2>&1
         _dirstack=($dirstack[@])
-        print -n "\033[F\r"
-        for precmd in $precmd_functions
-        do
-            $precmd
-        done
-        zle reset-prompt
+        zle fzf-redraw-prompt
         print -n '\e[?25h'
         return 0
     fi
@@ -691,52 +671,6 @@ function _accept_autosuggestion_or_mark_word() {
 }
 zle -N _accept_autosuggestion_or_mark_word
 bindkey '^N' _accept_autosuggestion_or_mark_word
-
-function _autosuggest_execute_or_clear_screen_or_ls() {
-    if [[ $BUFFER ]]; then
-        if [[ $POSTDISPLAY ]]; then
-            BUFFER+="${POSTDISPLAY}"
-            unset POSTDISPLAY
-        fi
-        zle accept-line
-    else
-        local garbage termpos
-        print -n "\033[6n\033[2J\033[3J\033[H"   # ask the terminal for the position and clear the screen
-        read -d\[ garbage </dev/tty              # discard the first part of the response
-        read -s -d R termpos </dev/tty               # store the position in bash variable 'termpos'
-        typeset -i col="${termpos%%;*}"
-
-        if (( col == 1 )); then
-            ls --hyperlink=always --color=auto --group-directories-first
-        elif (( col <= 2 )) && (( ${PROMPT_WS_SEP+1} )); then
-            ls --hyperlink=always --color=auto --group-directories-first
-            print
-        fi
-        preprompt
-        zle reset-prompt
-    fi
-}
-zle -N _autosuggest_execute_or_clear_screen_or_ls
-bindkey -e '\e' _autosuggest_execute_or_clear_screen_or_ls
-
-zmodload -i zsh/complist
-bindkey -M menuselect '\e' .accept-line
-
-
-repeat_or_menu_complete() {
-    if [[ -z $BUFFER ]]; then
-        eval $(fc -nl | tail -1) |& wl-copy -n
-    else
-        zle reverse-menu-complete
-    fi
-    return 0
-}
-zle -N repeat_or_menu_complete
-
-bindkey -M emacs "^[[Z" repeat_or_menu_complete
-bindkey -M menuselect '^[[Z' reverse-menu-complete
-
-
 
 kill-buffer() {
     [[ -z $BUFFER ]] && return 0
